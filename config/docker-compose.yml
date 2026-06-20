@@ -1,0 +1,47 @@
+version: '3.8'
+
+services:
+  api:
+    build:
+      context: ..
+      dockerfile: config/Dockerfile
+    container_name: multimedia-summary-api
+    ports:
+      - "8000:8000"
+    environment:
+      - DEBUG=False
+      - LOG_LEVEL=INFO
+      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
+      - GITHUB_TOKEN=${GITHUB_TOKEN}
+      - GITHUB_REPO=barobogi/Daily_for_Barobogi
+      - GMAIL_USER=${GMAIL_USER}
+      - GMAIL_REFRESH_TOKEN=${GMAIL_REFRESH_TOKEN}
+    env_file:
+      - ../.env
+    volumes:
+      - ../backend:/app
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/api/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 5s
+
+  # Optional: Add more services here
+  # postgres:
+  #   image: postgres:15-alpine
+  #   container_name: multimedia-db
+  #   environment:
+  #     POSTGRES_PASSWORD: postgres
+  #   volumes:
+  #     - postgres_data:/var/lib/postgresql/data
+  #   ports:
+  #     - "5432:5432"
+
+volumes:
+  # postgres_data:
+
+networks:
+  default:
+    name: multimedia-network

@@ -1,0 +1,29 @@
+{
+  "$schema": "https://railway.app/railway.schema.json",
+  "build": {
+    "builder": "dockerfile",
+    "dockerfile": "./config/Dockerfile"
+  },
+  "deploy": {
+    "startCommand": "uvicorn backend.main:app --host 0.0.0.0 --port $PORT",
+    "restartPolicyCondition": "on-failure",
+    "restartPolicyMaxRetries": 3,
+    "healthchecks": {
+      "liveness": {
+        "path": "/api/health",
+        "initialDelaySeconds": 10,
+        "periodSeconds": 30
+      }
+    }
+  },
+  "environment": [
+    {
+      "name": "PYTHONUNBUFFERED",
+      "value": "1"
+    },
+    {
+      "name": "LOG_LEVEL",
+      "value": "INFO"
+    }
+  ]
+}

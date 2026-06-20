@@ -74,38 +74,26 @@ async def extract_metadata(video_id: str) -> VideoMetadata:
 
 async def extract_transcript(video_id: str, language: str = "ko") -> str:
     """
-    Extract transcript from YouTube video
-
-    Priority: Korean > English > any available
+    Extract transcript using youtube_transcript_api v1.x.
+    Priority: requested language > English > any available
     """
+    api = YouTubeTranscriptApi()
 
     try:
-        # Try to get transcript in requested language
-        transcript = YouTubeTranscriptApi.get_transcript(video_id, languages=[language])
-        logger.info(f"Got transcript in {language}")
-    except:
+        snippets = api.fetch(video_id, languages=[language, "en"])
+        logger.info(f"Got transcript (lang={language})")
+    except Exception:
         try:
-            # Fallback to English
-            transcript = YouTubeTranscriptApi.get_transcript(video_id, languages=['en'])
-            logger.info("Fallback to English transcript")
-        except:
-            try:
-                # Get available transcripts
-                transcript_list = YouTubeTranscriptApi.list_transcripts(video_id)
-                # Use first available
-                transcript = transcript_list.primary.fetch()
-                logger.info("Using available transcript")
-            except Exception as e:
-                logger.error(f"Could not extract transcript: {str(e)}")
-                raise ValueError(f"Cannot extract transcript: {str(e)}")
+            transcript_list = api.list(video_id)
+            first = next(iter(transcript_list))
+            snippets = first.fetch()
+            logger.info(f"Fallback transcript: {first.language}")
+        except Exception as e:
+            logger.error(f"Could not extract transcript: {e}")
+            raise ValueError(f"Cannot extract transcript: {e}")
 
-    # Combine transcript segments
-    transcript_text = " ".join([item['text'] for item in transcript])
-
-    # Clean up text
-    transcript_text = clean_transcript(transcript_text)
-
-    return transcript_text
+    transcript_text = " ".join(s.text for s in snippets)
+    return clean_transcript(transcript_text)
 
 
 def clean_transcript(text: str) -> str:

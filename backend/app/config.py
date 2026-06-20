@@ -15,6 +15,8 @@ class Settings(BaseSettings):
     daum_id: Optional[str] = None        # 다음 아이디 (예: barobogi)
     daum_pw: Optional[str] = None        # 다음 비밀번호
     email_to: str = "barobogi79@gmail.com"  # 받는 이메일
+    proxy_username: Optional[str] = None  # Webshare proxy (YouTube IP ban workaround)
+    proxy_password: Optional[str] = None
 
     # GitHub
     github_repo: str = "barobogi/Daily_for_Barobogi"

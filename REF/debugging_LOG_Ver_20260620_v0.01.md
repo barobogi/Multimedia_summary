@@ -160,6 +160,59 @@ Settings → Networking → **Generate Domain** → 포트 `8000` 입력 → 새
 
 ---
 
+## 🐛 이슈 #4 — YouTube 자막 추출 실패: yt-dlp 포맷 오류 + 라이브러리 버전
+
+### 증상
+```
+ERROR: Requested format is not available. Use --list-formats for a list of available formats
+```
+yt-dlp로 메타데이터 추출 시 Railway 서버에서 전 영상 동일 에러.
+
+이후 `youtube_transcript_api` 로 전환했으나:
+```
+youtube_transcript_api._errors.TranscriptsDisabled:
+Could not retrieve a transcript for the video ... Subtitles are disabled for this video
+```
+테스트한 모든 영상(4개)에서 동일하게 실패.
+
+### 원인 1 — yt-dlp 메타데이터 추출 실패
+Railway 서버 IP(Google Cloud 미국 리전)에서 yt-dlp가 YouTube 포맷 정보를 가져오지 못함.  
+`download=False`여도 내부적으로 포맷 목록을 조회하는 과정에서 차단됨.
+
+**해결**: yt-dlp 대신 **YouTube oEmbed API** 사용 (인증 불필요, IP 무관)
+```python
+# https://www.youtube.com/oembed?url=...&format=json
+# → title, author_name(channel), thumbnail_url 반환
+```
+
+### 원인 2 — youtube_transcript_api 버전 차이로 클라우드 차단
+| 환경 | 버전 | 내부 방식 | Railway에서 작동 |
+|------|------|-----------|----------------|
+| 로컬 | 1.2.4 | InnerTube API | ✅ |
+| Railway | 0.6.3 | HTML 스크래핑 | ❌ 차단 |
+
+로컬 테스트로 확인: `x1b2AdDmLhw` 영상이 로컬 1.2.4에서는 자막 정상 추출됨.
+
+**해결**: `requirements.txt`에서 `youtube-transcript-api==0.6.3` → `1.2.4` 업그레이드  
+1.x API 변경점:
+```python
+# 0.6.x (구버전)
+YouTubeTranscriptApi.get_transcript(video_id, languages=['ko'])
+
+# 1.x (신버전)
+api = YouTubeTranscriptApi()
+snippets = api.fetch(video_id, languages=['ko', 'en'])
+text = " ".join(s.text for s in snippets)
+```
+
+### 교훈
+- Railway(Google Cloud) IP는 YouTube HTML 스크래핑에 차단될 수 있음
+- `youtube_transcript_api` 1.x는 InnerTube API 사용으로 이 문제 우회
+- 클라우드 배포 시 라이브러리 버전이 로컬과 달라 동작 차이 발생 가능 → 명시적 버전 고정 필요
+- YouTube 접근은 공식 API(oEmbed, InnerTube)를 사용하는 라이브러리가 스크래핑보다 안정적
+
+---
+
 ## ✅ 변경 이력
 
 | 날짜 | 버전 | 변경 내용 |
@@ -167,7 +220,8 @@ Settings → Networking → **Generate Domain** → 포트 `8000` 입력 → 새
 | 2026-06-20 | v0.01 | Railway Dockerfile 경로 오류 디버깅 및 해결 |
 | 2026-06-20 | v0.01 | Railway 환경변수 미주입 + 앱 시작 실패 해결 |
 | 2026-06-20 | v0.01 | Railway Public Domain 미생성으로 외부 접속 불가 해결 |
+| 2026-06-20 | v0.01 | yt-dlp IP 차단 → oEmbed 전환, youtube_transcript_api 0.6.3→1.2.4 업그레이드 |
 
 ---
 
-*다음 이슈 발생 시 이 파일에 ## 이슈 #4 로 추가*
+*다음 이슈 발생 시 이 파일에 ## 이슈 #5 로 추가*

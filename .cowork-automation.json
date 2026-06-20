@@ -1,0 +1,32 @@
+{
+  "project_name": "260620_3_Multimedia_summary",
+  "repo_path": "D:\\AI\\260620_3_Multimedia_summary",
+  "project_type": "unknown",
+  "watch_extensions": [
+    ".py",
+    ".js",
+    ".html",
+    ".json",
+    ".md",
+    ".css",
+    ".ts",
+    ".toml"
+  ],
+  "ignore_files": [
+    "cowork_changes.log",
+    "watcher.log",
+    ".sync_state.json"
+  ],
+  "git_config": {
+    "branch": "main",
+    "auto_push": true,
+    "commit_prefix": "auto:"
+  },
+  "sync_config": {
+    "debounce_delay": 12,
+    "bidirectional": true,
+    "max_retries": 3,
+    "retry_delay": 30
+  },
+  "created": "2026-06-20 20:16"
+}

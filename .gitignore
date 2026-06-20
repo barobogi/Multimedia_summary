@@ -1,0 +1,16 @@
+# 자동 생성 — Cowork-CLI 자동화 표준
+cowork_changes.log
+watcher.log
+global_watcher.log
+*.pyc
+__pycache__/
+.venv/
+venv/
+.env
+.env.local
+.claude/
+logs/
+.sync_state.json
+node_modules/
+.DS_Store
+Thumbs.db

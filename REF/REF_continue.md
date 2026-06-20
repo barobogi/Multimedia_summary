@@ -1,18 +1,22 @@
 # Multimedia Summary App - 지속 개발 문서
 
 **작성일**: 2026-06-20  
-**Phase**: 1차 개발 완료 → 2차 (실 배포 및 통합 테스트) 준비  
-**상태**: 코드 완성, Railway 배포 대기 중
+**Phase**: 2차 — Railway 배포 완료, 통합 테스트 진행 중  
+**상태**: ✅ Railway 배포 성공 · API 정상 응답 확인
 
 ---
 
 ## ✅ 완료 항목
 
 ### Phase 1.1 기본 흐름 (완료)
-- [x] FastAPI 백엔드: YouTube → Claude → Gmail/GitHub/Obsidian 전체 흐름
+- [x] FastAPI 백엔드: YouTube → Claude → Daum메일/GitHub/Obsidian 전체 흐름
 - [x] Flutter 프론트엔드: 홈/로딩/결과 화면, API 서비스, 로컬 저장소
 - [x] Docker 및 Railway 배포 설정 (`config/Dockerfile`, `railway.json`)
-- [x] `railway.json` 버그 수정: startCommand 제거 → Dockerfile CMD 사용
+- [x] `railway.json` 버그 수정: `DOCKERFILE` 대문자 + `dockerfilePath` 키 수정
+- [x] Gmail OAuth → Daum SMTP 교체 (환경변수 단순화)
+- [x] **Railway 배포 완료** → `https://multimediasummary-production-55d7.up.railway.app`
+- [x] GitHub Pages Multimedia 탭 → `https://barobogi.github.io/Daily_for_Barobogi/information.html`
+- [x] 디버깅 로그: `REF/debugging_LOG_Ver_20260620_v0.01.md` (이슈 3개 기록)
 - [x] GitHub Pages `information.html` 생성 (`Diary_for_Barobogi` 레포)
 - [x] 모든 nav에 Multimedia 탭 추가 (index/logs/ai-study/stats/goals/stock-dashboard)
 - [x] `backend/tests/` 테스트 코드: health, summarize (mock)

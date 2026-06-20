@@ -2,7 +2,7 @@
 
 **작성일**: 2026-06-20  
 **Phase**: 2차 — Railway 배포 완료, 통합 테스트 진행 중  
-**상태**: ✅ Railway 배포 성공 · API 정상 응답 확인
+**상태**: ✅ Railway 배포 성공 · YouTube IP 차단 이슈 → Webshare 프록시 코드 준비 완료 (설정 대기)
 
 ---
 
@@ -27,7 +27,22 @@
 
 ## 🚀 다음 작업 (우선순위 순)
 
-### 1️⃣ Railway 배포 (사용자 직접 진행 필요)
+### 1️⃣ Webshare 프록시 설정 ← **여기서 중단**
+
+Railway 서버(Google Cloud IP)가 YouTube에 차단되어 자막 추출 불가.  
+코드는 이미 준비됨 (`youtube_service.py` + `config.py`). 사용자 설정만 남음.
+
+**진행 순서:**
+1. [webshare.io](https://webshare.io) 무료 가입
+2. Dashboard → Proxy → Residential → Proxy Username/Password 복사
+3. Railway Variables 추가:
+   - `PROXY_USERNAME` = webshare username
+   - `PROXY_PASSWORD` = webshare password
+4. 재배포 후 테스트 영상: `https://youtu.be/x1b2AdDmLhw`
+
+### 2️⃣ 통합 테스트 (Webshare 설정 후)
+
+### 3️⃣ Flutter APK 빌드 확인 (사용자 직접 진행 필요)
 
 > **`docs/DEPLOYMENT.md` 참조**
 

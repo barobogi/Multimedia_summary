@@ -8,8 +8,8 @@ class Settings(BaseSettings):
     """Application settings from environment variables"""
 
     # API Keys
-    anthropic_api_key: str
-    github_token: str
+    anthropic_api_key: Optional[str] = None
+    github_token: Optional[str] = None
 
     # Email (Daum SMTP)
     daum_id: Optional[str] = None        # 다음 아이디 (예: barobogi)

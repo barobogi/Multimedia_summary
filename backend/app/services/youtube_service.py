@@ -72,12 +72,37 @@ async def extract_metadata(video_id: str) -> VideoMetadata:
         return VideoMetadata(title="Unknown", url=video_url)
 
 
+def _make_transcript_api() -> YouTubeTranscriptApi:
+    """
+    Build YouTubeTranscriptApi with Webshare proxy if configured.
+    Webshare proxy bypasses YouTube's cloud IP ban.
+    """
+    from ..config import settings
+    proxy_user = getattr(settings, "proxy_username", None)
+    proxy_pass = getattr(settings, "proxy_password", None)
+
+    if proxy_user and proxy_pass:
+        try:
+            from youtube_transcript_api.proxies import WebshareProxyConfig
+            logger.info("Using Webshare proxy for YouTube transcript")
+            return YouTubeTranscriptApi(
+                proxies=WebshareProxyConfig(
+                    proxy_username=proxy_user,
+                    proxy_password=proxy_pass,
+                )
+            )
+        except Exception as e:
+            logger.warning(f"Proxy config failed, falling back to direct: {e}")
+
+    return YouTubeTranscriptApi()
+
+
 async def extract_transcript(video_id: str, language: str = "ko") -> str:
     """
     Extract transcript using youtube_transcript_api v1.x.
     Priority: requested language > English > any available
     """
-    api = YouTubeTranscriptApi()
+    api = _make_transcript_api()
 
     try:
         snippets = api.fetch(video_id, languages=[language, "en"])

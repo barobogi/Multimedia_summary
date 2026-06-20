@@ -11,11 +11,10 @@ class Settings(BaseSettings):
     anthropic_api_key: str
     github_token: str
 
-    # Gmail
-    gmail_user: str
-    gmail_refresh_token: Optional[str] = None
-    gmail_client_id: Optional[str] = None
-    gmail_client_secret: Optional[str] = None
+    # Email (Daum SMTP)
+    daum_id: Optional[str] = None        # 다음 아이디 (예: barobogi)
+    daum_pw: Optional[str] = None        # 다음 비밀번호
+    email_to: str = "barobogi79@gmail.com"  # 받는 이메일
 
     # GitHub
     github_repo: str = "barobogi/Daily_for_Barobogi"

@@ -1,0 +1,423 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Multimedia - Today for Barobogi</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary: #3498db;
+            --secondary: #2c3e50;
+            --bg: #ecf0f1;
+            --text: #2c3e50;
+            --border: #bdc3c7;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            line-height: 1.6;
+        }
+
+        header {
+            background: white;
+            padding: 20px;
+            border-bottom: 1px solid var(--border);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        nav {
+            max-width: 1000px;
+            margin: 0 auto;
+            display: flex;
+            gap: 20px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .logo {
+            font-size: 18px;
+            font-weight: bold;
+            color: var(--secondary);
+            text-decoration: none;
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 15px;
+            list-style: none;
+            margin-left: auto;
+        }
+
+        .nav-links a {
+            text-decoration: none;
+            color: var(--text);
+            padding: 5px 10px;
+            border-radius: 4px;
+            transition: all 0.3s ease;
+        }
+
+        .nav-links a:hover,
+        .nav-links a.active {
+            background: var(--primary);
+            color: white;
+        }
+
+        main {
+            max-width: 1000px;
+            margin: 30px auto;
+            padding: 0 20px;
+        }
+
+        .header-section {
+            background: white;
+            padding: 30px;
+            border-radius: 8px;
+            margin-bottom: 30px;
+            border: 1px solid var(--border);
+        }
+
+        h1 {
+            font-size: 32px;
+            margin-bottom: 10px;
+            color: var(--secondary);
+        }
+
+        .controls {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+
+        .filter-btn {
+            padding: 8px 16px;
+            border: 1px solid var(--border);
+            background: white;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 14px;
+        }
+
+        .filter-btn.active {
+            background: var(--primary);
+            color: white;
+            border-color: var(--primary);
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .card {
+            background: white;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 20px;
+            transition: all 0.3s ease;
+        }
+
+        .card:hover {
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            transform: translateY(-2px);
+        }
+
+        .card-title {
+            font-size: 18px;
+            font-weight: bold;
+            margin-bottom: 8px;
+            color: var(--secondary);
+        }
+
+        .card-channel {
+            font-size: 12px;
+            color: #7f8c8d;
+            margin-bottom: 10px;
+        }
+
+        .card-summary {
+            font-size: 14px;
+            margin-bottom: 12px;
+            display: -webkit-box;
+            -webkit-line-clamp: 3;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+
+        .category-badges {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 12px;
+            flex-wrap: wrap;
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 4px 10px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 500;
+        }
+
+        .badge-ai {
+            background: #e8f4f8;
+            color: #2c3e50;
+        }
+
+        .badge-stock {
+            background: #fff3e0;
+            color: #d97706;
+        }
+
+        .badge-learning {
+            background: #f0f4ff;
+            color: #3b82f6;
+        }
+
+        .card-meta {
+            display: flex;
+            justify-content: space-between;
+            border-top: 1px solid var(--border);
+            padding-top: 10px;
+            font-size: 12px;
+            color: #95a5a6;
+        }
+
+        .card-link {
+            color: var(--primary);
+            text-decoration: none;
+        }
+
+        .card-link:hover {
+            text-decoration: underline;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: #7f8c8d;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 40px;
+        }
+
+        .spinner {
+            border: 3px solid var(--bg);
+            border-top: 3px solid var(--primary);
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 15px;
+            margin-bottom: 30px;
+        }
+
+        .stat-box {
+            background: white;
+            padding: 15px;
+            border-radius: 8px;
+            border-left: 4px solid var(--primary);
+            text-align: center;
+        }
+
+        .stat-value {
+            font-size: 24px;
+            font-weight: bold;
+            color: var(--primary);
+        }
+
+        .stat-label {
+            font-size: 12px;
+            color: #7f8c8d;
+            margin-top: 5px;
+        }
+
+        footer {
+            text-align: center;
+            padding: 20px;
+            color: #7f8c8d;
+            font-size: 12px;
+            border-top: 1px solid var(--border);
+            margin-top: 40px;
+        }
+
+        @media (max-width: 768px) {
+            .grid {
+                grid-template-columns: 1fr;
+            }
+
+            .nav-links {
+                width: 100%;
+                margin-left: 0;
+            }
+
+            h1 {
+                font-size: 24px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <nav>
+            <a href="index.html" class="logo">📚 Today for Barobogi</a>
+            <ul class="nav-links">
+                <li><a href="index.html">Home</a></li>
+                <li><a href="logs.html">Logs</a></li>
+                <li><a href="ai-study.html">AI Study</a></li>
+                <li><a href="stock-dashboard.html">Stock</a></li>
+                <li><a href="information.html" class="active">Multimedia</a></li>
+                <li><a href="stats.html">Stats</a></li>
+                <li><a href="goals.html">Goals</a></li>
+            </ul>
+        </nav>
+    </header>
+
+    <main>
+        <div class="header-section">
+            <h1>📺 Multimedia</h1>
+            <p>동영상 요약 및 인사이트 자동 정리</p>
+        </div>
+
+        <div class="controls">
+            <button class="filter-btn active" onclick="filterCategory(null)">모든 항목</button>
+            <button class="filter-btn" onclick="filterCategory('AI')">🤖 AI</button>
+            <button class="filter-btn" onclick="filterCategory('Stock')">💰 주식</button>
+            <button class="filter-btn" onclick="filterCategory('Learning')">📚 학습</button>
+        </div>
+
+        <div id="stats" class="stats"></div>
+
+        <div id="grid" class="grid">
+            <div class="loading">
+                <div class="spinner"></div>
+                <p>데이터를 불러오는 중입니다...</p>
+            </div>
+        </div>
+
+        <div id="emptyState" class="empty-state" style="display: none;">
+            <p>📭 아직 저장된 항목이 없습니다.</p>
+        </div>
+    </main>
+
+    <footer>
+        <p>© 2026 Barobogi. Powered by Multimedia Summary App</p>
+    </footer>
+
+    <script>
+        let allData = [];
+        let currentFilter = null;
+
+        const GITHUB_RAW_URL = 'https://raw.githubusercontent.com/barobogi/Daily_for_Barobogi/main/_data/multimedia.json';
+
+        async function loadData() {
+            try {
+                const response = await fetch(GITHUB_RAW_URL);
+                if (!response.ok) throw new Error(`HTTP ${response.status}`);
+                allData = await response.json();
+                renderCards();
+                updateStats();
+            } catch (error) {
+                console.error('Error:', error);
+                document.getElementById('grid').innerHTML = `<div class="empty-state" style="grid-column: 1/-1;">❌ 데이터 로드 실패</div>`;
+            }
+        }
+
+        function filterCategory(category) {
+            currentFilter = category;
+            document.querySelectorAll('.filter-btn').forEach(btn => btn.classList.remove('active'));
+            event.target.classList.add('active');
+            renderCards();
+        }
+
+        function renderCards() {
+            let filtered = allData;
+
+            if (currentFilter) {
+                filtered = filtered.filter(item =>
+                    item.categories.includes(currentFilter) ||
+                    (currentFilter === 'AI' && item.ai_related?.length > 0) ||
+                    (currentFilter === 'Stock' && item.stock_related?.length > 0) ||
+                    (currentFilter === 'Learning' && item.learning_related?.length > 0)
+                );
+            }
+
+            filtered.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+
+            const grid = document.getElementById('grid');
+            if (filtered.length === 0) {
+                grid.style.display = 'none';
+                document.getElementById('emptyState').style.display = 'block';
+                return;
+            }
+
+            grid.style.display = 'grid';
+            document.getElementById('emptyState').style.display = 'none';
+
+            grid.innerHTML = filtered.map(item => {
+                const date = new Date(item.timestamp).toLocaleDateString('ko-KR');
+                const badges = (item.categories || [])
+                    .map(cat => `<span class="badge badge-${cat.toLowerCase()}">${cat}</span>`)
+                    .join('');
+
+                return `
+                    <div class="card">
+                        <div class="card-title">${item.title}</div>
+                        <div class="card-channel">📺 ${item.channel}</div>
+                        <div class="card-summary">${item.summary}</div>
+                        <div class="category-badges">${badges}</div>
+                        ${item.stock_related?.length > 0 ? `<div style="background:#fff3e0;padding:8px;border-radius:4px;font-size:12px;margin-bottom:10px;">💰 주식: ${item.stock_related.join(', ')}</div>` : ''}
+                        <div class="card-meta">
+                            <span>${date}</span>
+                            <a href="${item.url}" class="card-link" target="_blank">링크 →</a>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function updateStats() {
+            if (allData.length === 0) return;
+            const aiCount = allData.filter(i => i.ai_related?.length > 0).length;
+            const stockCount = allData.filter(i => i.stock_related?.length > 0).length;
+            const learningCount = allData.filter(i => i.learning_related?.length > 0).length;
+
+            document.getElementById('stats').innerHTML = `
+                <div class="stat-box"><div class="stat-value">${allData.length}</div><div class="stat-label">총 영상</div></div>
+                <div class="stat-box"><div class="stat-value">${aiCount}</div><div class="stat-label">AI</div></div>
+                <div class="stat-box"><div class="stat-value">${stockCount}</div><div class="stat-label">주식</div></div>
+                <div class="stat-box"><div class="stat-value">${learningCount}</div><div class="stat-label">학습</div></div>
+            `;
+        }
+
+        document.addEventListener('DOMContentLoaded', loadData);
+        setInterval(loadData, 5 * 60 * 1000);
+    </script>
+</body>
+</html>

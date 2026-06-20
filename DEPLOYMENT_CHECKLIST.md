@@ -53,36 +53,24 @@
 
 ---
 
-### Phase 2: Gmail OAuth 설정 (필수)
+### Phase 2: Daum 이메일 설정 (선택)
 
-> 메일 발송 기능이 필요할 때
+> 메일 발송 기능이 필요할 때 (OAuth 없이 간단함!)
 
-- [ ] **2.1 Google Cloud Console 접속**
-  - https://console.cloud.google.com 방문
-  - 새 프로젝트 생성: `multimedia-summary`
+- [ ] **2.1 Daum 계정 준비**
+  - https://daum.net 계정 필요 (예: barobogi@daum.net)
+  - 또는 기존 다음 아이디 사용
 
-- [ ] **2.2 Gmail API 활성화**
-  - "API 및 서비스" → "라이브러리"
-  - "Gmail API" 검색 → 활성화
+- [ ] **2.2 Railway 환경 변수 설정**
+  - Railway Dashboard → Variables 탭
+  - 다음 2개 변수 추가:
+    ```
+    DAUM_ID = barobogi          # @daum.net 앞부분만
+    DAUM_PW = 본인다음비밀번호
+    EMAIL_TO = barobogi79@gmail.com  # (선택) 받을 메일 주소
+    ```
 
-- [ ] **2.3 OAuth 2.0 클라이언트 생성**
-  - "API 및 서비스" → "사용자 인증 정보"
-  - "사용자 인증 정보 만들기" → "OAuth 클라이언트 ID"
-  - 응용 프로그램 유형: "데스크톱"
-  - `credentials.json` 다운로드
-
-- [ ] **2.4 Refresh Token 발급**
-  - 아래 Python 스크립트 실행 (별도 지원 필요하면 요청):
-  ```python
-  from google_auth_oauthlib.flow import InstalledAppFlow
-  SCOPES = ['https://www.googleapis.com/auth/gmail.send']
-  flow = InstalledAppFlow.from_client_secrets_file('credentials.json', SCOPES)
-  creds = flow.run_local_server(port=0)
-  print("Refresh Token:", creds.refresh_token)
-  ```
-  - 발급된 Refresh Token을 Railway `GMAIL_REFRESH_TOKEN` 변수에 입력
-
-- [ ] **2.5 메일 전송 테스트**
+- [ ] **2.3 메일 전송 테스트**
   ```bash
   curl -X POST https://YOUR-APP.up.railway.app/api/summarize \
     -H "Content-Type: application/json" \
@@ -91,8 +79,12 @@
       "platform": "youtube"
     }'
   
-  # barobogi79@gmail.com으로 메일 수신 확인
+  # barobogi79@gmail.com (또는 설정한 이메일)로 메일 수신 확인
   ```
+
+**설정이 없으면?**
+- 이메일 발송 스킵됨 (다른 기능은 정상 작동)
+- 로그에 경고 메시지 표시됨
 
 ---
 

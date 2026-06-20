@@ -11,7 +11,11 @@ from ..config import settings
 
 logger = logging.getLogger(__name__)
 
-gh = Github(settings.github_token)
+
+def _gh():
+    if not settings.github_token:
+        raise RuntimeError("GITHUB_TOKEN이 설정되지 않았습니다")
+    return Github(settings.github_token)
 
 
 async def update_github_pages(summary: SummaryResponse) -> bool:
@@ -28,7 +32,7 @@ async def update_github_pages(summary: SummaryResponse) -> bool:
     """
 
     try:
-        repo = gh.get_repo(settings.github_repo)
+        repo = _gh().get_repo(settings.github_repo)
 
         # Create or update multimedia.json data file
         data_file_path = "_data/multimedia.json"
@@ -108,7 +112,7 @@ async def save_file_to_github(
     """
 
     try:
-        repo = gh.get_repo(settings.github_repo)
+        repo = _gh().get_repo(settings.github_repo)
 
         # Check if file exists
         try:

@@ -1,39 +1,33 @@
 """YouTube video extraction service"""
 
 import logging
-from typing import Tuple
-import yt_dlp
-from youtube_transcript_api import YouTubeTranscriptApi
 import re
+from typing import Tuple
+
+import httpx
+from youtube_transcript_api import YouTubeTranscriptApi
 
 from ..models import VideoMetadata
-from ..config import settings
 
 logger = logging.getLogger(__name__)
+
+OEMBED_URL = "https://www.youtube.com/oembed"
 
 
 async def extract_video_data(video_url: str, language: str = "ko") -> Tuple[VideoMetadata, str]:
     """
-    Extract video metadata and transcript from YouTube
-
-    Args:
-        video_url: YouTube video URL
-        language: Transcript language (default: Korean)
+    Extract video metadata and transcript from YouTube.
 
     Returns:
         Tuple of (VideoMetadata, transcript_text)
     """
-
-    # Extract video ID
     video_id = extract_youtube_id(video_url)
     if not video_id:
         raise ValueError(f"Invalid YouTube URL: {video_url}")
 
-    # Extract metadata using yt-dlp
     logger.info(f"Extracting metadata for: {video_id}")
     metadata = await extract_metadata(video_id)
 
-    # Extract transcript
     logger.info(f"Extracting transcript for: {video_id}")
     transcript = await extract_transcript(video_id, language)
 
@@ -43,43 +37,39 @@ async def extract_video_data(video_url: str, language: str = "ko") -> Tuple[Vide
 def extract_youtube_id(url: str) -> str:
     """Extract YouTube video ID from URL"""
     patterns = [
-        r'(?:https?:\/\/)?(?:www\.)?youtube\.com\/watch\?v=([a-zA-Z0-9_-]{11})',
-        r'(?:https?:\/\/)?(?:www\.)?youtu\.be\/([a-zA-Z0-9_-]{11})',
-        r'(?:https?:\/\/)?(?:www\.)?youtube\.com\/embed\/([a-zA-Z0-9_-]{11})',
+        r'(?:https?://)?(?:www\.)?youtube\.com/watch\?v=([a-zA-Z0-9_-]{11})',
+        r'(?:https?://)?(?:www\.)?youtu\.be/([a-zA-Z0-9_-]{11})',
+        r'(?:https?://)?(?:www\.)?youtube\.com/embed/([a-zA-Z0-9_-]{11})',
     ]
-
     for pattern in patterns:
         match = re.search(pattern, url)
         if match:
             return match.group(1)
-
     return ""
 
 
 async def extract_metadata(video_id: str) -> VideoMetadata:
-    """Extract video metadata using yt-dlp"""
-
-    ydl_opts = {
-        'quiet': True,
-        'no_warnings': True,
-    }
-
+    """
+    Extract video metadata via YouTube oEmbed API.
+    No API key or format selection needed — works from any server IP.
+    """
+    video_url = f"https://www.youtube.com/watch?v={video_id}"
     try:
-        with yt_dlp.YoutubeDL(ydl_opts) as ydl:
-            info = ydl.extract_info(f'https://www.youtube.com/watch?v={video_id}', download=False)
+        async with httpx.AsyncClient(timeout=10) as client:
+            res = await client.get(OEMBED_URL, params={"url": video_url, "format": "json"})
+            res.raise_for_status()
+            info = res.json()
 
-            return VideoMetadata(
-                title=info.get('title', 'Unknown'),
-                url=f'https://www.youtube.com/watch?v={video_id}',
-                channel=info.get('channel', None),
-                description=info.get('description', None),
-                duration=info.get('duration', None),
-                publish_date=info.get('upload_date', None),
-                thumbnail_url=info.get('thumbnail', None)
-            )
+        return VideoMetadata(
+            title=info.get("title", "Unknown"),
+            url=video_url,
+            channel=info.get("author_name"),
+            thumbnail_url=info.get("thumbnail_url"),
+        )
     except Exception as e:
-        logger.error(f"Error extracting metadata: {str(e)}")
-        raise
+        logger.error(f"oEmbed metadata error: {e}")
+        # 메타데이터 실패해도 최소 정보로 계속 진행
+        return VideoMetadata(title="Unknown", url=video_url)
 
 
 async def extract_transcript(video_id: str, language: str = "ko") -> str:

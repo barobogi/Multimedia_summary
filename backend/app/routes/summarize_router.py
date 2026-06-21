@@ -122,5 +122,43 @@ async def distribute_summary(summary: SummaryResponse):
 @router.get("/summarize/{video_id}")
 async def get_summary(video_id: str):
     """Get a previously generated summary (if cached)"""
-    # TODO: Implement caching/retrieval from database
     raise HTTPException(status_code=501, detail="Not implemented yet")
+
+
+# ─── Gemini 테스트 엔드포인트 ────────────────────────────────────────────────
+from pydantic import BaseModel
+import os
+
+class GeminiTestRequest(BaseModel):
+    youtube_url: str
+    prompt: str = "이 YouTube 영상을 한국어로 요약해주세요."
+
+@router.post("/gemini-test")
+async def gemini_test(request: GeminiTestRequest):
+    """
+    Gemini API로 YouTube URL 직접 요약 테스트.
+    GEMINI_API_KEY 환경변수 필요.
+    """
+    import google.generativeai as genai
+
+    api_key = os.getenv("GEMINI_API_KEY")
+    if not api_key:
+        raise HTTPException(status_code=500, detail="GEMINI_API_KEY 환경변수가 없습니다.")
+
+    try:
+        genai.configure(api_key=api_key)
+        model = genai.GenerativeModel("gemini-1.5-pro")
+
+        response = model.generate_content([
+            {"file_data": {"file_uri": request.youtube_url, "mime_type": "video/mp4"}},
+            request.prompt
+        ])
+
+        return {
+            "success": True,
+            "youtube_url": request.youtube_url,
+            "summary": response.text,
+            "model": "gemini-1.5-pro"
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Gemini 오류: {str(e)}")

@@ -2,7 +2,7 @@ services:
   - type: web
     name: multimedia-summary
     runtime: docker
-    dockerfilePath: config/Dockerfile
+    dockerfilePath: ./Dockerfile
     dockerContext: .
     plan: free
     healthCheckPath: /api/health

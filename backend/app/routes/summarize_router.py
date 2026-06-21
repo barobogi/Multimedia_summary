@@ -10,7 +10,8 @@ from ..services import (
     claude_service,
     gmail_service,
     obsidian_service,
-    github_service
+    github_service,
+    gemini_service
 )
 
 logger = logging.getLogger(__name__)
@@ -35,13 +36,16 @@ async def summarize_video(request: SummaryRequest, background_tasks: BackgroundT
         logger.info(f"Processing: {request.video_url}")
 
         if request.platform.lower() == "youtube":
+            # Gemini로 YouTube 영상 직접 요약 (IP 차단 우회)
+            metadata = await youtube_service.extract_metadata_only(request.video_url)
             if request.transcript:
-                # 클라이언트(앱)가 자막을 직접 추출해 전달 → 서버는 메타데이터만 가져옴
-                metadata = await youtube_service.extract_metadata_only(request.video_url)
                 transcript = request.transcript
-                logger.info("Using client-provided transcript (bypassing cloud IP ban)")
+                logger.info("Using client-provided transcript")
             else:
-                metadata, transcript = await youtube_service.extract_video_data(request.video_url)
+                logger.info("Extracting transcript via Gemini (bypassing cloud IP ban)")
+                transcript = await gemini_service.extract_transcript_via_gemini(
+                    request.video_url, request.language
+                )
         else:
             raise HTTPException(
                 status_code=400,

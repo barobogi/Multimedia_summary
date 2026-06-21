@@ -28,6 +28,10 @@ dependencies:
   url_launcher: ^6.2.0
   share_plus: ^7.2.0
 
+  # 쿠키 자동 관리 (YouTube 세션 유지)
+  cookie_jar: ^4.0.8
+  dio_cookie_manager: ^3.1.1
+
   # 로깅
   logger: ^2.0.0
 

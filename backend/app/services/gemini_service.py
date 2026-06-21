@@ -1,6 +1,7 @@
 """Gemini API service — YouTube 영상 직접 요약"""
 
 import os
+import asyncio
 import logging
 import google.generativeai as genai
 
@@ -9,12 +10,18 @@ logger = logging.getLogger(__name__)
 GEMINI_MODEL = "models/gemini-2.5-flash"
 
 
-def _get_model():
+def _sync_extract(video_url: str, prompt: str) -> str:
+    """동기 Gemini 호출 — run_in_executor에서 실행"""
     api_key = os.getenv("GEMINI_API_KEY")
     if not api_key:
         raise ValueError("GEMINI_API_KEY 환경변수가 없습니다.")
     genai.configure(api_key=api_key)
-    return genai.GenerativeModel(GEMINI_MODEL)
+    model = genai.GenerativeModel(GEMINI_MODEL)
+    response = model.generate_content([
+        {"file_data": {"file_uri": video_url, "mime_type": "video/mp4"}},
+        prompt
+    ])
+    return response.text.strip()
 
 
 async def extract_transcript_via_gemini(video_url: str, language: str = "ko") -> str:
@@ -29,14 +36,10 @@ async def extract_transcript_via_gemini(video_url: str, language: str = "ko") ->
         "타임스탬프나 설명 없이 순수하게 내용만 작성해주세요."
     )
 
-    model = _get_model()
     logger.info(f"Gemini transcript extraction: {video_url}")
 
-    response = model.generate_content([
-        {"file_data": {"file_uri": video_url, "mime_type": "video/mp4"}},
-        prompt
-    ])
+    loop = asyncio.get_event_loop()
+    transcript = await loop.run_in_executor(None, _sync_extract, video_url, prompt)
 
-    transcript = response.text.strip()
     logger.info(f"Gemini transcript: {len(transcript)} chars")
     return transcript

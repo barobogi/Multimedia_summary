@@ -1,8 +1,8 @@
 # Multimedia Summary App - 지속 개발 문서
 
 **작성일**: 2026-06-20 / **최종 업데이트**: 2026-06-21  
-**Phase**: 3차 — 클라이언트 자막 추출 구조 전환 완료  
-**상태**: ✅ Render.com 배포 성공 · ✅ 아키텍처 전환 완료 · ✅ APK 3차 빌드 완료 · ⏳ 통합 테스트 진행 중
+**Phase**: 4차 — Gemini API 아키텍처 전환 완료  
+**상태**: ✅ Render.com 배포 성공 · ✅ Gemini 요약 테스트 성공 · ⏳ APK v1.0 빌드 전
 
 ---
 
@@ -18,75 +18,77 @@
 - [x] **Render.com으로 이전** → `https://multimedia-summary.onrender.com`
 - [x] Health Check 정상: `{"status":"healthy",...}`
 
-### Phase 3 — YouTube IP 차단 우회 (아키텍처 전환)
-**문제**: 모든 클라우드 서버(Railway=GCP, Render=AWS계열)에서 YouTube 자막 API 차단
+### Phase 3 — YouTube IP 차단 우회 시도 (클라이언트 자막 추출 — 최종 실패)
+- [x] youtube_explode_dart → XmlParserException (YouTube API 변경)
+- [x] timedtext API → 빈 응답
+- [x] 수동 쿠키 → 빈 응답
+- [x] cookie_jar 자동 세션 → 빈 응답
+- [x] 5가지 방법 전부 실패 → **근본 원인: 브라우저 인증 세션 재현 불가**
 
-**해결**: 자막 추출을 서버 → Flutter 앱(디바이스)으로 이전
+### Phase 4 — Gemini API 아키텍처 전환 ✅
+**문제**: YouTube 자막 추출은 실제 브라우저 없이 불가능
 
-#### 변경된 아키텍처
+**해결**: Gemini API (Google 계열)는 YouTube 영상 직접 접근 가능 → 자막 추출 불필요
+
+#### 최종 아키텍처
 ```
-[기존]
-Flutter 앱 → (URL 전달) → Render 서버 → YouTube 자막 추출 ← ❌ IP 차단
-
-[변경 후]
-Flutter 앱 → YouTube 자막 추출 (디바이스 IP, 차단 없음)
-Flutter 앱 → (URL + 자막 전달) → Render 서버 → Claude 요약 → 게시
+[Phase 4 최종]
+Flutter 앱 → (YouTube URL만 전달) → Render 서버
+Render 서버 → Gemini 2.5 Flash (YouTube 영상 직접 이해 → 텍스트 추출)
+Render 서버 → Claude (구조화 요약)
+Render 서버 → Daum메일 / GitHub Pages / Obsidian 자동 배포
 ```
 
 #### 코드 변경 목록
 | 파일 | 변경 내용 |
 |------|-----------|
-| `backend/app/models.py` | `SummaryRequest`에 `transcript: Optional[str]` 추가 |
-| `backend/app/routes/summarize_router.py` | transcript 있으면 YouTube 자막 추출 스킵 |
-| `backend/app/services/youtube_service.py` | `extract_metadata_only()` 함수 추가 |
-| `frontend/pubspec.yaml` | `youtube_explode_dart: ^2.3.0` 추가 |
-| `frontend/lib/services/transcript_service.dart` | 신규 — 디바이스에서 자막 추출 |
-| `frontend/lib/services/api_service.dart` | transcript 파라미터 추가, URL → Render.com |
-| `frontend/lib/screens/home_screen.dart` | 자막 먼저 추출 후 서버 전송 |
+| `backend/app/services/gemini_service.py` | 신규 — Gemini YouTube 직접 접근 |
+| `backend/app/services/__init__.py` | gemini_service import 추가 |
+| `backend/app/routes/summarize_router.py` | YouTube → Gemini 자막 추출 연동 |
+| `backend/requirements.txt` | `google-generativeai==0.8.3` 추가 |
+| `frontend/pubspec.yaml` | cookie_jar, dio_cookie_manager 제거 |
+| `frontend/lib/services/api_service.dart` | transcript 파라미터 제거 |
+| `frontend/lib/screens/home_screen.dart` | TranscriptService 제거, URL만 전송 |
+| `frontend/lib/services/transcript_service.dart` | **삭제** |
+| `.gitignore` | `/lib/` 수정 (frontend/lib 누락 해결) |
+
+#### 테스트 결과
+```
+POST /api/gemini-test
+영상: https://youtu.be/eImK97E4w20 (레트로 게임 앱 소개)
+결과: ✅ 성공 — gemini-2.5-flash로 한국어 완벽 요약 (약 2000자)
+```
 
 ### 기타
-- [x] YouTube oEmbed API로 메타데이터 추출 (yt-dlp 대체)
-- [x] `youtube_transcript_api` 0.6.3 → 1.2.4 업그레이드
+- [x] YouTube oEmbed API로 메타데이터 추출
 - [x] GitHub Pages `information.html` Multimedia 탭 생성
-- [x] 루트 `Dockerfile` 추가 (Render.com 배포용)
-- [x] `render.yaml` 추가
-- [x] 디버깅 로그: `REF/debugging_LOG_Ver_20260620_v0.01.md` (이슈 7개)
-- [x] AI Study 탭 포스팅 게시
-- [x] Flutter APK 빌드 4단계 오류 해결 (build_runner, DioExceptionType, kotlin.incremental, Gradle lock)
-- [x] APK 1차 설치 → "요약생성 실패" 원인 분석 → 자막 실패 처리 + 타임아웃 수정
-- [x] ClaudeMonitor.exe 부팅 자동 시작 제거 (레지스트리 HKCU\Run)
+- [x] Render.com 배포 + GEMINI_API_KEY 환경변수 설정
+- [x] 디버깅 로그: 이슈 #11까지 기록 완료
+- [x] .gitignore 수정으로 frontend/lib/ Dart 소스 첫 커밋 완료
+- [x] Windows Downloads 폴더 → D:\Downloads 심볼릭 링크 이전
+- [x] AI Study 탭 포스팅: "Barobogi 데스크탑 최적화 도전 #1"
 
 ---
 
 ## 🚀 남은 작업 (우선순위 순)
 
-### 1️⃣ Flutter APK 빌드 및 통합 테스트 ← **진행 중**
+### 1️⃣ 통합 테스트 (Render 재배포 후)
+- Render 재배포 대기 (Gemini service 신규 코드 반영)
+- `POST /api/summarize` 전체 플로우 테스트
+- Claude 요약 → Daum 이메일 수신 확인
+- GitHub Pages information.html 카드 생성 확인
 
-**2차 빌드 수정 내역 (2026-06-21)**
-- `summary_model.g.dart` 생성 (`build_runner` 실행)
-- `DioExceptionType.connectionError` switch 케이스 추가
-- `kotlin.incremental=false` (Windows 크로스 드라이브 버그 해결)
-- `home_screen.dart`: 자막 추출 실패 시 즉시 에러 표시 (서버 전송 안 함)
-- `api_service.dart`: 수신 타임아웃 30초 → 180초
+### 2️⃣ APK v1.0 빌드
+- 앱 아이콘 교체 (flutter_launcher_icons 또는 직접 교체)
+- `pubspec.yaml` 버전 확인 (현재 `1.0.0+1`)
+- `flutter build apk --release`
+- `adb install -r` 폰 설치
+- 실기기 통합 테스트
 
-**2차 빌드 완료 후 테스트:**
-- 자막 추출 (디바이스 → youtube_explode_dart) 정상 여부
-- Claude 요약 (Render 서버) 정상 여부
-- Daum 이메일 수신 확인
-- GitHub Pages information.html 카드 자동 생성 확인
-
-**빌드 명령어 (참고)**
-```powershell
-$env:JAVA_HOME = "C:\Program Files\Android\Android Studio\jbr"
-cd d:\AI\260620_3_Multimedia_summary\frontend
-flutter build apk --release
-# APK: build\app\outputs\flutter-apk\app-release.apk (22MB)
-# 설치: adb install -r <APK경로>
-```
-
-### 2️⃣ AI Study 포스팅 업데이트 (통합 테스트 성공 후)
-- "진행중" → 완료 상태로 업데이트
-- 최종 구조 다이어그램 추가
+### 3️⃣ 마무리
+- CHANGELOG.md 작성 (v1.0 소급 포함)
+- AI Study 포스팅 완료 상태로 업데이트
+- REF_continue.md 최종화
 
 ---
 
@@ -96,35 +98,33 @@ flutter build apk --release
 260620_3_Multimedia_summary/
 ├── Dockerfile                      ✅ 루트 Dockerfile (Render.com용)
 ├── render.yaml                     ✅ Render.com 배포 설정
-├── railway.json                    (Railway 폐기, 파일은 유지)
-├── .github/workflows/
-│   └── backend-test.yml            ✅ CI 워크플로우
 ├── backend/
 │   ├── app/
-│   │   ├── config.py               ✅ PROXY_USERNAME/PASSWORD (미사용, 코드만 유지)
-│   │   ├── models.py               ✅ SummaryRequest.transcript 추가
+│   │   ├── models.py               ✅ SummaryRequest
 │   │   ├── routes/
-│   │   │   └── summarize_router.py ✅ transcript 있으면 YouTube 스킵
+│   │   │   └── summarize_router.py ✅ Gemini 연동
 │   │   └── services/
-│   │       ├── youtube_service.py  ✅ oEmbed + extract_metadata_only()
+│   │       ├── gemini_service.py   ✅ 신규 — YouTube 직접 접근
+│   │       ├── youtube_service.py  ✅ oEmbed 메타데이터
+│   │       ├── claude_service.py   ✅ 구조화 요약
 │   │       ├── gmail_service.py    ✅ Daum SMTP
-│   │       └── github_service.py   ✅ lazy _gh() 함수
-│   └── requirements.txt            ✅ youtube-transcript-api==1.2.4
+│   │       └── github_service.py   ✅ GitHub Pages
+│   └── requirements.txt            ✅ google-generativeai==0.8.3
 ├── frontend/
-│   ├── pubspec.yaml                ✅ youtube_explode_dart 추가
+│   ├── pubspec.yaml                ✅ cookie_jar 제거
 │   └── lib/
 │       ├── services/
-│       │   ├── transcript_service.dart  ✅ 신규 — 디바이스 자막 추출
-│       │   └── api_service.dart         ✅ transcript 파라미터 + Render URL
+│       │   ├── api_service.dart    ✅ URL만 전송
+│       │   └── clipboard_helper.dart
 │       └── screens/
-│           └── home_screen.dart         ✅ 자막 먼저 추출 → 서버 전송
+│           └── home_screen.dart    ✅ TranscriptService 제거
 └── REF/
-    ├── REF_continue.md
-    └── debugging_LOG_Ver_20260620_v0.01.md  ✅ 이슈 5개 기록
+    ├── REF_continue.md             ✅ (이 파일)
+    └── debugging_LOG_Ver_20260620_v0.01.md  ✅ 이슈 #11까지
 
 Diary_for_Barobogi/ (별도 레포)
 ├── information.html                ✅ Multimedia 탭
-└── ai-study.html                   ✅ 개발 포스팅 (20260620-3, 진행중)
+└── ai-study.html                   ✅ "데스크탑 최적화 도전 #1" 포스팅
 ```
 
 ---
@@ -133,9 +133,9 @@ Diary_for_Barobogi/ (별도 레포)
 
 - **Render API**: `https://multimedia-summary.onrender.com`
 - **Health Check**: `https://multimedia-summary.onrender.com/api/health`
+- **Gemini Test**: `POST https://multimedia-summary.onrender.com/api/gemini-test`
 - **Multimedia 탭**: `https://barobogi.github.io/Daily_for_Barobogi/information.html`
 - **GitHub Repo**: `https://github.com/barobogi/Multimedia_summary`
-- **Railway (폐기)**: `https://multimediasummary-production-55d7.up.railway.app` (YouTube IP 차단으로 미사용)
 
 ---
 
@@ -143,9 +143,9 @@ Diary_for_Barobogi/ (별도 레포)
 
 1. **.env 파일 절대 커밋 금지** — API 키는 Render 환경변수로만 설정
 2. **Render 무료 플랜**: 15분 비활성 시 슬립 → 첫 요청 30~60초 대기 가능
-3. Render Environment Variables 현재 설정: ANTHROPIC_API_KEY, GITHUB_TOKEN, DAUM_ID, DAUM_PW
-4. `information.html`은 첫 요약 성공 전까지 빈 화면 (정상)
-5. `youtube_explode_dart`는 자막 있는 영상만 지원 — 자막 없는 영상은 에러 메시지 표시됨
+3. Render Environment Variables: `ANTHROPIC_API_KEY`, `GITHUB_TOKEN`, `DAUM_ID`, `DAUM_PW`, `GEMINI_API_KEY`
+4. Gemini API: `gemini-2.5-flash` 모델 사용 (prefix: `models/gemini-2.5-flash`)
+5. Samsung Secure Folder = 별도 사용자(user 150) → APK 설치 시 보안 폴더에는 설치 금지
 
 ---
 
@@ -153,17 +153,21 @@ Diary_for_Barobogi/ (별도 레포)
 
 | # | 이슈 | 해결 |
 |---|------|------|
-| 1 | Railway Dockerfile 경로 오류 | `DOCKERFILE` 대문자 + `dockerfilePath` 키 수정 |
+| 1 | Railway Dockerfile 경로 오류 | `dockerfilePath` 키 수정 |
 | 2 | Railway 환경변수 미주입 → 앱 크래시 | Optional 처리 + lazy 함수 |
 | 3 | Railway Public Domain 미생성 | Settings → Networking에서 직접 생성 |
 | 4 | yt-dlp IP 차단 + 라이브러리 버전 문제 | oEmbed 전환 + 1.2.4 업그레이드 |
-| 5 | 모든 클라우드 IP YouTube 차단 | 아키텍처 전환: 클라이언트 자막 추출 |
-| 6 | Flutter APK 빌드 4단계 오류 | build_runner 실행, DioExceptionType 추가, kotlin.incremental=false, Gradle lock 해제 |
+| 5 | 모든 클라우드 IP YouTube 차단 | → Phase 3 클라이언트 자막 추출 시도 |
+| 6 | Flutter APK 빌드 4단계 오류 | build_runner, DioExceptionType, kotlin.incremental=false |
 | 7 | APK "요약생성 실패" | 자막 실패 시 즉시 에러 표시 + 타임아웃 180초 |
+| 8 | youtu.be URL 파싱 실패 + SnackBar 3초 문제 | _extractVideoId() + AlertDialog 전환 |
+| 9 | AndroidManifest INTERNET 권한 누락 | `<uses-permission android:name="android.permission.INTERNET" />` 추가 |
+| 10 | youtube_explode_dart XmlParserException | 라이브러리 제거 + 직접 Dio 구현 |
+| 11 | YouTube 자막 5가지 방법 전부 실패 | **Gemini API 아키텍처 전환** (근본 해결) |
 
 자세한 내용: `REF/debugging_LOG_Ver_20260620_v0.01.md`
 
 ---
 
 *마지막 업데이트: 2026-06-21*  
-*다음 작업: 2차 APK 빌드 완료 → 폰 설치 → 통합 테스트 → AI Study 포스팅 완료 처리*
+*다음 작업: 통합 테스트 → APK v1.0 빌드 (아이콘 포함) → CHANGELOG.md 작성*

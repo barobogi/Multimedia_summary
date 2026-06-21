@@ -213,6 +213,67 @@ text = " ".join(s.text for s in snippets)
 
 ---
 
+## 🐛 이슈 #5 — Railway(Google Cloud) IP → YouTube 완전 차단 + Webshare 무료 프록시 실패
+
+### 증상
+```
+youtube_transcript_api._errors.RequestBlocked:
+YouTube is blocking requests from your IP.
+You are doing requests from an IP belonging to a cloud provider
+(like AWS, Google Cloud Platform, Azure, etc.)
+```
+이후 Webshare 프록시 적용 시:
+```
+urllib3.exceptions.ResponseError: too many 429 error responses
+HTTPSConnectionPool(host='www.youtube.com', port=443): Max retries exceeded
+```
+
+### 원인 분석
+
+**원인 1 — Railway = Google Cloud IP**
+Railway는 내부적으로 Google Cloud Platform(GCP) 인프라를 사용.  
+YouTube는 GCP, AWS, Azure 등 클라우드 IP 대역을 DB로 관리하며 자막 API 요청을 차단.  
+`youtube_transcript_api` 0.6.x에서는 "Subtitles are disabled" 에러로 위장되다가  
+1.x로 업그레이드 후 정확한 에러 메시지 확인: "IP belonging to a cloud provider"
+
+**원인 2 — Webshare 무료 티어 = 데이터센터 IP**
+Webshare 무료 플랜이 제공하는 프록시는 **Residential IP가 아닌 데이터센터 IP**.  
+YouTube는 이 IP들도 이미 차단 목록에 보유 → 429 (Too Many Requests) 반복.
+
+### 시도한 해결책과 결과
+
+| 시도 | 결과 |
+|------|------|
+| youtube_transcript_api 0.6.3 → 1.2.4 업그레이드 | ❌ 여전히 IP 차단 (에러 메시지만 명확해짐) |
+| Webshare 무료 프록시 (WebshareProxyConfig) | ❌ 데이터센터 IP라 429 동일 차단 |
+| `proxies=` → `proxy_config=` 파라미터 수정 | ✅ 코드 오류 수정됨, 차단 문제는 별개 |
+
+### 진단 과정
+
+1. 로컬에서 동일 영상 자막 추출 → **성공** (일반 가정 IP)
+2. Railway Console에서 직접 테스트 → **실패** (클라우드 IP 차단)
+3. Webshare 적용 후 Console 재테스트 → **실패** (429, 데이터센터 IP 차단)
+
+→ **문제는 코드가 아닌 Railway 서버 IP 자체**
+
+### 결론 및 해결 방향
+
+Railway(Google Cloud) 환경에서는 YouTube 자막 API를 정상 사용 불가.  
+유료 Residential 프록시($5/월~) 없이는 Railway에서 해결 불가.
+
+**채택한 해결책: Render.com으로 배포 플랫폼 이전**
+- Render.com은 Google Cloud가 아닌 별도 인프라 사용
+- 동일 Dockerfile 그대로 사용 가능 (`render.yaml` 추가만 필요)
+- 무료 플랜 제공 (단, 15분 비활성 시 슬립)
+
+### 교훈
+- YouTube 자막 API는 클라우드 IP(GCP, AWS, Azure)에서 전면 차단됨
+- Webshare 등 무료 프록시는 데이터센터 IP라 동일하게 차단
+- 우회 방법: ① Residential 유료 프록시 ② 비-클라우드 플랫폼 이전 ③ 클라이언트(앱)에서 자막 추출
+- 플랫폼 선택 시 "어떤 클라우드를 쓰는지" 확인 필요 (YouTube 우회 목적이면 GCP/AWS/Azure 제외)
+
+---
+
 ## ✅ 변경 이력
 
 | 날짜 | 버전 | 변경 내용 |
@@ -221,7 +282,8 @@ text = " ".join(s.text for s in snippets)
 | 2026-06-20 | v0.01 | Railway 환경변수 미주입 + 앱 시작 실패 해결 |
 | 2026-06-20 | v0.01 | Railway Public Domain 미생성으로 외부 접속 불가 해결 |
 | 2026-06-20 | v0.01 | yt-dlp IP 차단 → oEmbed 전환, youtube_transcript_api 0.6.3→1.2.4 업그레이드 |
+| 2026-06-21 | v0.01 | Railway(GCP) IP + Webshare 무료 프록시 모두 YouTube 차단 → Render.com 이전 결정 |
 
 ---
 
-*다음 이슈 발생 시 이 파일에 ## 이슈 #5 로 추가*
+*다음 이슈 발생 시 이 파일에 ## 이슈 #6 로 추가*

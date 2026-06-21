@@ -147,18 +147,28 @@ async def gemini_test(request: GeminiTestRequest):
 
     try:
         genai.configure(api_key=api_key)
-        model = genai.GenerativeModel("gemini-1.5-pro")
+        # 사용 가능한 모델 순서대로 시도
+        models_to_try = ["gemini-2.0-flash", "gemini-1.5-flash", "gemini-1.5-pro-latest"]
+        last_error = None
 
-        response = model.generate_content([
-            {"file_data": {"file_uri": request.youtube_url, "mime_type": "video/mp4"}},
-            request.prompt
-        ])
+        for model_name in models_to_try:
+            try:
+                model = genai.GenerativeModel(model_name)
+                response = model.generate_content([
+                    {"file_data": {"file_uri": request.youtube_url, "mime_type": "video/mp4"}},
+                    request.prompt
+                ])
+                return {
+                    "success": True,
+                    "youtube_url": request.youtube_url,
+                    "summary": response.text,
+                    "model": model_name
+                }
+            except Exception as e:
+                last_error = f"{model_name}: {str(e)}"
+                logger.warning(f"Model {model_name} failed: {e}")
+                continue
 
-        return {
-            "success": True,
-            "youtube_url": request.youtube_url,
-            "summary": response.text,
-            "model": "gemini-1.5-pro"
-        }
+        raise Exception(f"모든 모델 실패. 마지막 오류: {last_error}")
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Gemini 오류: {str(e)}")

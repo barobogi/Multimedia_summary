@@ -407,6 +407,54 @@ static const Duration _receiveTimeout = Duration(seconds: 180);
 
 ---
 
+## 🐛 이슈 #8 — youtube_explode_dart URL 파싱 실패 (youtu.be + ?si= 파라미터)
+
+### 증상
+`https://youtu.be/eImK97E4w20?si=UwhPIrSYanEjkUYt` 링크로 요약 시도 → "요약생성 실패 excep~" 즉시 표시.  
+에러 다이얼로그 없이 3초 스낵바로만 표시되어 전체 메시지 확인 불가.
+
+### 원인 분석
+
+**원인 1 — VideoId(url) 에 전체 URL 전달**  
+`youtube_explode_dart`의 `VideoId(videoUrl)` 생성자에 단축 URL + `?si=` 파라미터가 포함된 전체 URL을 전달.  
+`?si=` 는 YouTube 공유 추적 파라미터로 라이브러리가 파싱 실패할 가능성 존재.
+
+**원인 2 — 에러 메시지 3초 스낵바로 잘려서 디버깅 불가**  
+오류 전체 텍스트를 볼 수 없어 정확한 원인 파악 불가.
+
+### 해결
+
+**해결 1 — 비디오 ID 직접 추출 후 전달** (`transcript_service.dart`):
+```dart
+String? _extractVideoId(String url) {
+    final uri = Uri.tryParse(url);
+    if (uri == null) return null;
+    if (uri.host == 'youtu.be') return uri.pathSegments.firstOrNull; // youtu.be/ID
+    return uri.queryParameters['v']; // youtube.com/watch?v=ID
+}
+// VideoId(rawId) — URL 대신 순수 ID만 전달
+```
+
+지원 URL 형식:
+- `https://youtu.be/ID?si=xxx` → `ID`
+- `https://youtube.com/watch?v=ID&t=30` → `ID`
+
+**해결 2 — 에러 다이얼로그로 전체 내용 표시** (`home_screen.dart`):
+```dart
+showDialog(
+    builder: (ctx) => AlertDialog(
+        content: SingleChildScrollView(child: SelectableText(message)),
+    ),
+);
+```
+
+### 교훈
+- `youtube_explode_dart`에 URL 전체를 넘기지 말고 비디오 ID만 추출해서 전달
+- 에러 메시지는 스낵바(3초, 잘림) 대신 스크롤 가능한 다이얼로그로 표시해야 디버깅 가능
+- 공유 URL에는 `?si=`, `&t=`, `&list=` 등 불필요한 파라미터가 포함될 수 있음 → 항상 파싱 필요
+
+---
+
 ## ✅ 변경 이력
 
 | 날짜 | 버전 | 변경 내용 |
@@ -418,7 +466,8 @@ static const Duration _receiveTimeout = Duration(seconds: 180);
 | 2026-06-21 | v0.01 | Railway(GCP) IP + Webshare 무료 프록시 모두 YouTube 차단 → Render.com 이전 결정 |
 | 2026-06-21 | v0.01 | Flutter APK 빌드 4단계 오류 해결 (이슈 #6) |
 | 2026-06-21 | v0.01 | APK "요약생성 실패" 원인 분석 및 수정 (이슈 #7) |
+| 2026-06-21 | v0.01 | youtu.be URL 파싱 실패 + 에러 다이얼로그 개선 (이슈 #8) |
 
 ---
 
-*다음 이슈 발생 시 이 파일에 ## 이슈 #8 로 추가*
+*다음 이슈 발생 시 이 파일에 ## 이슈 #9 로 추가*

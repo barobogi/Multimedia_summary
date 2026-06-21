@@ -35,7 +35,13 @@ async def summarize_video(request: SummaryRequest, background_tasks: BackgroundT
         logger.info(f"Processing: {request.video_url}")
 
         if request.platform.lower() == "youtube":
-            metadata, transcript = await youtube_service.extract_video_data(request.video_url)
+            if request.transcript:
+                # 클라이언트(앱)가 자막을 직접 추출해 전달 → 서버는 메타데이터만 가져옴
+                metadata = await youtube_service.extract_metadata_only(request.video_url)
+                transcript = request.transcript
+                logger.info("Using client-provided transcript (bypassing cloud IP ban)")
+            else:
+                metadata, transcript = await youtube_service.extract_video_data(request.video_url)
         else:
             raise HTTPException(
                 status_code=400,

@@ -26,8 +26,9 @@ class TranscriptSegment(BaseModel):
 class SummaryRequest(BaseModel):
     """Request model for summarization"""
     video_url: str
-    platform: str = "youtube"  # youtube, vimeo, etc.
-    language: str = "ko"  # Korean by default
+    platform: str = "youtube"
+    language: str = "ko"
+    transcript: Optional[str] = None  # 클라이언트에서 직접 추출해 전달 (클라우드 IP 차단 우회)
 
 
 class SummaryResponse(BaseModel):

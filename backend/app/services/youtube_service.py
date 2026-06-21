@@ -97,6 +97,14 @@ def _make_transcript_api() -> YouTubeTranscriptApi:
     return YouTubeTranscriptApi()
 
 
+async def extract_metadata_only(video_url: str) -> VideoMetadata:
+    """메타데이터만 추출 (클라이언트가 transcript 제공 시 사용)"""
+    video_id = extract_youtube_id(video_url)
+    if not video_id:
+        raise ValueError(f"Invalid YouTube URL: {video_url}")
+    return await extract_metadata(video_id)
+
+
 async def extract_transcript(video_id: str, language: str = "ko") -> str:
     """
     Extract transcript using youtube_transcript_api v1.x.

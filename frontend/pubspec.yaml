@@ -28,6 +28,9 @@ dependencies:
   url_launcher: ^6.2.0
   share_plus: ^7.2.0
 
+  # YouTube 자막 추출 (앱에서 직접 — 클라우드 IP 차단 우회)
+  youtube_explode_dart: ^2.3.0
+
   # 로깅
   logger: ^2.0.0
 

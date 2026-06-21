@@ -1,8 +1,8 @@
 # Multimedia Summary App - 지속 개발 문서
 
 **작성일**: 2026-06-20 / **최종 업데이트**: 2026-06-21  
-**Phase**: 4차 — Gemini API 아키텍처 전환 완료  
-**상태**: ✅ Render.com 배포 성공 · ✅ Gemini 요약 테스트 성공 · ⏳ APK v1.0 빌드 전
+**Phase**: 완료 — 전체 파이프라인 통합 테스트 성공  
+**상태**: ✅ 배포 완료 · ✅ APK 설치 완료 · ✅ 통합 테스트 성공
 
 ---
 
@@ -26,126 +26,29 @@
 - [x] 5가지 방법 전부 실패 → **근본 원인: 브라우저 인증 세션 재현 불가**
 
 ### Phase 4 — Gemini API 아키텍처 전환 ✅
-**문제**: YouTube 자막 추출은 실제 브라우저 없이 불가능
-
 **해결**: Gemini API (Google 계열)는 YouTube 영상 직접 접근 가능 → 자막 추출 불필요
 
 #### 최종 아키텍처
 ```
-[Phase 4 최종]
 Flutter 앱 → (YouTube URL만 전달) → Render 서버
 Render 서버 → Gemini 2.5 Flash (YouTube 영상 직접 이해 → 텍스트 추출)
 Render 서버 → Claude (구조화 요약)
 Render 서버 → Daum메일 / GitHub Pages / Obsidian 자동 배포
 ```
 
-#### 코드 변경 목록
-| 파일 | 변경 내용 |
-|------|-----------|
-| `backend/app/services/gemini_service.py` | 신규 — Gemini YouTube 직접 접근 |
-| `backend/app/services/__init__.py` | gemini_service import 추가 |
-| `backend/app/routes/summarize_router.py` | YouTube → Gemini 자막 추출 연동 |
-| `backend/requirements.txt` | `google-generativeai==0.8.3` 추가 |
-| `frontend/pubspec.yaml` | cookie_jar, dio_cookie_manager 제거 |
-| `frontend/lib/services/api_service.dart` | transcript 파라미터 제거 |
-| `frontend/lib/screens/home_screen.dart` | TranscriptService 제거, URL만 전송 |
-| `frontend/lib/services/transcript_service.dart` | **삭제** |
-| `.gitignore` | `/lib/` 수정 (frontend/lib 누락 해결) |
-
-#### 테스트 결과
-```
-POST /api/gemini-test
-영상: https://youtu.be/eImK97E4w20 (레트로 게임 앱 소개)
-결과: ✅ 성공 — gemini-2.5-flash로 한국어 완벽 요약 (약 2000자)
-```
+### Phase 5 — 통합 테스트 & 버그 수정 ✅
+- [x] APK v1.0 빌드 (`flutter build apk --release`, 21.1MB)
+- [x] 실기기 설치 (`adb install -r`, Samsung R3CR8080RJJ)
+- [x] **이슈 #12 해결**: DioException receive timeout — APK 재빌드로 180s→360s 타임아웃 적용
+- [x] **이슈 #13 해결**: `type 'Null' is not a subtype of 'List<dynamic>'` — Pydantic camelCase 직렬화 수정
+- [x] 통합 테스트 성공 — "[핫클립] 서울의 도시 개발 역사 / YTN 사이언스" 요약 완료
+- [x] GitHub Actions Keep-alive (14분마다 Render ping, 콜드스타트 방지)
 
 ### 기타
-- [x] YouTube oEmbed API로 메타데이터 추출
-- [x] GitHub Pages `information.html` Multimedia 탭 생성
-- [x] Render.com 배포 + GEMINI_API_KEY 환경변수 설정
-- [x] 디버깅 로그: 이슈 #11까지 기록 완료
-- [x] .gitignore 수정으로 frontend/lib/ Dart 소스 첫 커밋 완료
-- [x] Windows Downloads 폴더 → D:\Downloads 심볼릭 링크 이전
-- [x] AI Study 탭 포스팅: "Barobogi 데스크탑 최적화 도전 #1"
-
----
-
-## 🚀 남은 작업 (우선순위 순)
-
-### 1️⃣ 통합 테스트 (Render 재배포 후)
-- Render 재배포 대기 (Gemini service 신규 코드 반영)
-- `POST /api/summarize` 전체 플로우 테스트
-- Claude 요약 → Daum 이메일 수신 확인
-- GitHub Pages information.html 카드 생성 확인
-
-### 2️⃣ APK v1.0 빌드
-- 앱 아이콘 교체 (flutter_launcher_icons 또는 직접 교체)
-- `pubspec.yaml` 버전 확인 (현재 `1.0.0+1`)
-- `flutter build apk --release`
-- `adb install -r` 폰 설치
-- 실기기 통합 테스트
-
-### 3️⃣ 마무리
-- CHANGELOG.md 작성 (v1.0 소급 포함)
-- AI Study 포스팅 완료 상태로 업데이트
-- REF_continue.md 최종화
-
----
-
-## 📁 주요 파일 구조
-
-```
-260620_3_Multimedia_summary/
-├── Dockerfile                      ✅ 루트 Dockerfile (Render.com용)
-├── render.yaml                     ✅ Render.com 배포 설정
-├── backend/
-│   ├── app/
-│   │   ├── models.py               ✅ SummaryRequest
-│   │   ├── routes/
-│   │   │   └── summarize_router.py ✅ Gemini 연동
-│   │   └── services/
-│   │       ├── gemini_service.py   ✅ 신규 — YouTube 직접 접근
-│   │       ├── youtube_service.py  ✅ oEmbed 메타데이터
-│   │       ├── claude_service.py   ✅ 구조화 요약
-│   │       ├── gmail_service.py    ✅ Daum SMTP
-│   │       └── github_service.py   ✅ GitHub Pages
-│   └── requirements.txt            ✅ google-generativeai==0.8.3
-├── frontend/
-│   ├── pubspec.yaml                ✅ cookie_jar 제거
-│   └── lib/
-│       ├── services/
-│       │   ├── api_service.dart    ✅ URL만 전송
-│       │   └── clipboard_helper.dart
-│       └── screens/
-│           └── home_screen.dart    ✅ TranscriptService 제거
-└── REF/
-    ├── REF_continue.md             ✅ (이 파일)
-    └── debugging_LOG_Ver_20260620_v0.01.md  ✅ 이슈 #11까지
-
-Diary_for_Barobogi/ (별도 레포)
-├── information.html                ✅ Multimedia 탭
-└── ai-study.html                   ✅ "데스크탑 최적화 도전 #1" 포스팅
-```
-
----
-
-## 🔗 관련 링크
-
-- **Render API**: `https://multimedia-summary.onrender.com`
-- **Health Check**: `https://multimedia-summary.onrender.com/api/health`
-- **Gemini Test**: `POST https://multimedia-summary.onrender.com/api/gemini-test`
-- **Multimedia 탭**: `https://barobogi.github.io/Daily_for_Barobogi/information.html`
-- **GitHub Repo**: `https://github.com/barobogi/Multimedia_summary`
-
----
-
-## ⚠️ 주의사항
-
-1. **.env 파일 절대 커밋 금지** — API 키는 Render 환경변수로만 설정
-2. **Render 무료 플랜**: 15분 비활성 시 슬립 → 첫 요청 30~60초 대기 가능
-3. Render Environment Variables: `ANTHROPIC_API_KEY`, `GITHUB_TOKEN`, `DAUM_ID`, `DAUM_PW`, `GEMINI_API_KEY`
-4. Gemini API: `gemini-2.5-flash` 모델 사용 (prefix: `models/gemini-2.5-flash`)
-5. Samsung Secure Folder = 별도 사용자(user 150) → APK 설치 시 보안 폴더에는 설치 금지
+- [x] CHANGELOG.md v1.0 작성
+- [x] 앱 아이콘 커스텀 디자인 (네이비 + 재생버튼 + AI스파크)
+- [x] AI Study 포스팅: "Barobogi 데스크탑 최적화 도전 #1"
+- [x] 디버깅 로그: 이슈 #13까지 기록
 
 ---
 
@@ -164,10 +67,67 @@ Diary_for_Barobogi/ (별도 레포)
 | 9 | AndroidManifest INTERNET 권한 누락 | `<uses-permission android:name="android.permission.INTERNET" />` 추가 |
 | 10 | youtube_explode_dart XmlParserException | 라이브러리 제거 + 직접 Dio 구현 |
 | 11 | YouTube 자막 5가지 방법 전부 실패 | **Gemini API 아키텍처 전환** (근본 해결) |
+| 12 | DioException receive timeout (0:03:00) | APK 재빌드 (180s→360s) + 구버전 APK 교체 |
+| 13 | type 'Null' is not a subtype of 'List\<dynamic\>' | Pydantic CamelModel 베이스 + response_model_by_alias=True |
 
-자세한 내용: `REF/debugging_LOG_Ver_20260620_v0.01.md`
+---
+
+## 📁 주요 파일 구조
+
+```
+260620_3_Multimedia_summary/
+├── Dockerfile                      ✅ 루트 Dockerfile (Render.com용)
+├── render.yaml                     ✅ Render.com 배포 설정
+├── CHANGELOG.md                    ✅ v1.0
+├── .github/workflows/keep_alive.yml ✅ 14분마다 Render ping
+├── backend/
+│   ├── app/
+│   │   ├── models.py               ✅ CamelModel 베이스 (Flutter 호환)
+│   │   ├── routes/
+│   │   │   └── summarize_router.py ✅ Gemini 연동 + response_model_by_alias
+│   │   └── services/
+│   │       ├── gemini_service.py   ✅ YouTube 직접 접근
+│   │       ├── youtube_service.py  ✅ oEmbed 메타데이터
+│   │       ├── claude_service.py   ✅ 구조화 요약
+│   │       ├── gmail_service.py    ✅ Daum SMTP
+│   │       └── github_service.py   ✅ GitHub Pages
+│   └── requirements.txt            ✅ google-generativeai==0.8.3
+├── frontend/
+│   ├── pubspec.yaml                ✅ cookie_jar 제거
+│   └── lib/
+│       ├── services/
+│       │   └── api_service.dart    ✅ receiveTimeout 360s
+│       └── screens/
+│           └── home_screen.dart    ✅ URL만 전송
+└── REF/
+    ├── REF_continue.md             ✅ (이 파일)
+    └── debugging_LOG_Ver_20260620_v0.01.md  ✅ 이슈 #13까지
+
+Diary_for_Barobogi/ (별도 레포)
+├── information.html                ✅ Multimedia 탭
+└── ai-study.html                   ✅ "데스크탑 최적화 도전 #1" 포스팅
+```
+
+---
+
+## 🔗 관련 링크
+
+- **Render API**: `https://multimedia-summary.onrender.com`
+- **Health Check**: `https://multimedia-summary.onrender.com/api/health`
+- **Multimedia 탭**: `https://barobogi.github.io/Daily_for_Barobogi/information.html`
+- **GitHub Repo**: `https://github.com/barobogi/Multimedia_summary`
+
+---
+
+## ⚠️ 주의사항
+
+1. **.env 파일 절대 커밋 금지** — API 키는 Render 환경변수로만 설정
+2. **Render 무료 플랜**: 15분 비활성 시 슬립 → Keep-alive Action으로 방지 중
+3. Render Environment Variables: `ANTHROPIC_API_KEY`, `GITHUB_TOKEN`, `DAUM_ID`, `DAUM_PW`, `GEMINI_API_KEY`
+4. Gemini API: `gemini-2.5-flash` 모델 사용
+5. Samsung Secure Folder = 별도 사용자(user 150) → APK 설치 시 보안 폴더에는 설치 금지
 
 ---
 
 *마지막 업데이트: 2026-06-21*  
-*다음 작업: 통합 테스트 → APK v1.0 빌드 (아이콘 포함) → CHANGELOG.md 작성*
+*상태: 프로젝트 완료 — 운영 모니터링 단계*

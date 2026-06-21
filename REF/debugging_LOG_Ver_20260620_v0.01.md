@@ -523,6 +523,55 @@ JSON3 파싱 실패 시 에러 메시지에 응답 앞부분 포함하여 다음
 
 ---
 
+## 🐛 이슈 #11 — YouTube 자막 추출 근본적 실패: 쿠키 세션 방식 한계
+
+### 증상
+```
+Exception: 자막 응답이 비었습니다.
+Exception: 이 영상에서 자막을 찾을 수 없습니다. (ko/en 수동 및 자동생성 자막 모두 없음)
+```
+cookie_jar + CookieManager로 YouTube 세션 유지해도 captionTracks baseUrl이 빈 응답 반환.
+
+### 원인
+YouTube caption URL(baseUrl)은 **인증된 브라우저 세션**이 필요.  
+모바일 HTTP 클라이언트(Dio)는 브라우저의 실제 쿠키 스택(CONSENT, NID, VISITOR 등 수십 개)을  
+완전히 재현 불가능. YouTube가 IP 기반 + 세션 검증으로 이중 차단.
+
+시도한 방법 5가지 전부 실패:
+1. youtube_explode_dart (XmlParserException — YouTube API 변경)
+2. timedtext API (빈 응답)
+3. 수동 쿠키 헤더 (빈 응답)
+4. cookie_jar 자동 세션 관리 (빈 응답)
+5. 다양한 User-Agent 위장 (빈 응답)
+
+### 해결 — 아키텍처 전환
+**Gemini API의 YouTube 네이티브 접근 활용**.  
+Google/Gemini는 YouTube 소유사로 직접 영상 이해 가능 → 자막 추출 불필요.
+
+```python
+# backend/app/services/gemini_service.py
+model = genai.GenerativeModel("models/gemini-2.5-flash")
+response = model.generate_content([
+    {"file_data": {"file_uri": youtube_url, "mime_type": "video/mp4"}},
+    "이 YouTube 영상의 내용을 한국어로 상세하게 작성해주세요."
+])
+```
+
+Flutter 앱은 이제 URL만 서버로 전송 — 자막 추출 코드 완전 제거.
+
+### 결과
+- `gemini-2.5-flash`로 YouTube 영상 완벽 요약 성공
+- TranscriptService.dart 삭제, cookie_jar/dio_cookie_manager 의존성 제거
+- 아키텍처 단순화: 앱 → URL 전송 → 서버 Gemini 처리 → Claude 분석 → 결과 반환
+
+### 교훈
+- YouTube 자막 추출은 실제 브라우저 없이는 불가능에 가까움
+- "왜 안 되나" 보다 "다른 방법은 없나"로 발상 전환이 핵심
+- Gemini(Google 계열) + YouTube = 네이티브 접근 가능 (다른 AI API는 불가)
+- GEMINI_API_KEY는 Render 환경변수로만 관리 (.env 커밋 절대 금지)
+
+---
+
 ## ✅ 변경 이력
 
 | 날짜 | 버전 | 변경 내용 |
@@ -537,6 +586,7 @@ JSON3 파싱 실패 시 에러 메시지에 응답 앞부분 포함하여 다음
 | 2026-06-21 | v0.01 | youtu.be URL 파싱 실패 + 에러 다이얼로그 개선 (이슈 #8) |
 | 2026-06-21 | v0.01 | AndroidManifest INTERNET 권한 누락 → release APK 네트워크 불가 (이슈 #9) |
 | 2026-06-21 | v0.01 | youtube_explode_dart 제거 + Dio responseType plain 강제 (이슈 #10) |
+| 2026-06-21 | v0.01 | YouTube 자막 추출 5가지 방법 전부 실패 → Gemini API 아키텍처 전환 (이슈 #11) |
 
 ---
 

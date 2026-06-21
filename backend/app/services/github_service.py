@@ -40,7 +40,7 @@ async def update_github_pages(summary: SummaryResponse) -> bool:
         # Get existing data
         try:
             contents = repo.get_contents(data_file_path)
-            existing_data = json.loads(contents.decoded_content.decode())
+            existing_data = json.loads(contents.decoded_content.decode('utf-8-sig'))  # BOM 처리
         except GithubException:
             # File doesn't exist yet
             existing_data = []

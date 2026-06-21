@@ -60,6 +60,9 @@ async def update_github_pages(summary: SummaryResponse) -> bool:
             "thumbnail": summary.metadata.thumbnail_url
         }
 
+        # 동일 URL 중복 제거 후 최신 내용으로 교체
+        video_url = str(summary.metadata.url)
+        existing_data = [e for e in existing_data if e.get("url") != video_url]
         existing_data.insert(0, new_entry)  # Add to beginning
         existing_data = existing_data[:50]  # Keep only latest 50
 

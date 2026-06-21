@@ -86,7 +86,7 @@ def _make_transcript_api() -> YouTubeTranscriptApi:
             from youtube_transcript_api.proxies import WebshareProxyConfig
             logger.info("Using Webshare proxy for YouTube transcript")
             return YouTubeTranscriptApi(
-                proxies=WebshareProxyConfig(
+                proxy_config=WebshareProxyConfig(
                     proxy_username=proxy_user,
                     proxy_password=proxy_pass,
                 )

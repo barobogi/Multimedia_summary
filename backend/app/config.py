@@ -34,7 +34,7 @@ class Settings(BaseSettings):
     log_level: str = "INFO"
 
     # API Configuration
-    claude_model: str = "claude-3-5-sonnet-20241022"
+    claude_model: str = "claude-sonnet-4-5"
     max_tokens_summary: int = 2000
     max_tokens_analysis: int = 1000
 

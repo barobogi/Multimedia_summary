@@ -159,7 +159,7 @@ async def gemini_test(request: GeminiTestRequest):
     try:
         genai.configure(api_key=api_key)
         # 사용 가능한 모델 순서대로 시도
-        models_to_try = ["gemini-2.0-flash", "gemini-1.5-flash", "gemini-1.5-pro-latest"]
+        models_to_try = ["models/gemini-2.5-flash", "models/gemini-2.5-pro", "models/gemini-2.0-flash"]
         last_error = None
 
         for model_name in models_to_try:

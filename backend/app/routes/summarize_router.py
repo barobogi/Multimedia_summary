@@ -133,6 +133,17 @@ class GeminiTestRequest(BaseModel):
     youtube_url: str
     prompt: str = "이 YouTube 영상을 한국어로 요약해주세요."
 
+@router.get("/gemini-models")
+async def gemini_list_models():
+    """사용 가능한 Gemini 모델 목록 확인"""
+    import google.generativeai as genai
+    api_key = os.getenv("GEMINI_API_KEY")
+    if not api_key:
+        raise HTTPException(status_code=500, detail="GEMINI_API_KEY 없음")
+    genai.configure(api_key=api_key)
+    models = [m.name for m in genai.list_models() if "generateContent" in m.supported_generation_methods]
+    return {"models": models}
+
 @router.post("/gemini-test")
 async def gemini_test(request: GeminiTestRequest):
     """

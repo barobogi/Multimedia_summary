@@ -15,7 +15,7 @@ class ApiService {
   );
 
   static const Duration _connectTimeout = Duration(seconds: 30);
-  static const Duration _receiveTimeout = Duration(seconds: 180);
+  static const Duration _receiveTimeout = Duration(seconds: 360);
 
   ApiService() {
     _dio = Dio(

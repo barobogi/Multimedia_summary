@@ -17,12 +17,12 @@ class LoadingScreen extends StatelessWidget {
           ),
           const SizedBox(height: 24),
           Text(
-            '요약을 생성하고 있습니다',
+            'AI가 영상을 분석하고 있습니다',
             style: Theme.of(context).textTheme.titleMedium,
           ),
           const SizedBox(height: 8),
           Text(
-            '잠시만 기다려주세요...',
+            'Gemini + Claude 처리 중... 최대 3~4분 소요',
             style: Theme.of(context).textTheme.bodySmall?.copyWith(
               color: Colors.grey,
             ),

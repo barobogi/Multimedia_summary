@@ -274,6 +274,139 @@ Railway(Google Cloud) 환경에서는 YouTube 자막 API를 정상 사용 불가
 
 ---
 
+## 🐛 이슈 #6 — Flutter APK 빌드 연속 실패 (4단계)
+
+### 배경
+Render.com 배포 + 클라이언트 자막 추출 아키텍처 완료 후 Flutter APK 빌드 시도.  
+총 4가지 오류가 순차적으로 발생.
+
+### 오류 1 — `summary_model.g.dart` 미생성
+
+**증상**
+```
+lib/models/summary_model.dart:3:6: Error: Can't use 'lib/models/summary_model.g.dart' as a part, because it has no 'part of' declaration.
+Method not found: '_$VideoMetadataFromJson'
+```
+
+**원인**  
+`json_serializable` 코드 생성 파일(`*.g.dart`)이 없는 상태에서 빌드 시도.  
+`flutter pub run build_runner build`를 한 번도 실행하지 않았음.
+
+**해결**
+```powershell
+flutter pub run build_runner build --delete-conflicting-outputs
+```
+
+---
+
+### 오류 2 — `DioExceptionType.connectionError` 누락
+
+**증상**
+```
+lib/services/api_service.dart:107:19: Error: The type 'DioExceptionType' is not exhaustively matched by the switch cases since it doesn't match 'DioExceptionType.connectionError'.
+```
+
+**원인**  
+`dio` 최신 버전(5.9.2)에서 `DioExceptionType.connectionError` 케이스가 추가됐는데 switch문에 없음.
+
+**해결**  
+`api_service.dart` switch문에 케이스 추가:
+```dart
+case DioExceptionType.connectionError:
+  _logger.e('Connection error: ${error.message}');
+```
+
+---
+
+### 오류 3 — Kotlin 증분 컴파일 크로스 드라이브 버그 (Windows)
+
+**증상**
+```
+java.lang.IllegalArgumentException: this and base files have different roots:
+C:\Users\82102\AppData\Local\Pub\Cache\...\shared_preferences_android\...
+and D:\AI\260620_3_Multimedia_summary\frontend\android
+```
+
+**원인**  
+Kotlin 증분 컴파일러가 캐시(C드라이브)와 프로젝트(D드라이브) 간 상대 경로 계산 불가.  
+Windows에서 드라이브가 다르면 상대 경로가 성립되지 않음 (Linux/Mac에는 없는 문제).
+
+**해결**  
+`frontend/android/gradle.properties`에 추가:
+```properties
+kotlin.incremental=false
+```
+
+**부작용**: 매 빌드가 풀빌드로 돌아가 빌드 시간 증가 (~9분/회)
+
+---
+
+### 오류 4 — Gradle 인스턴스 Lock 충돌
+
+**증상**
+```
+Timeout waiting to lock cache directory md-supplier (C:\Users\82102\.gradle\caches\8.12\md-supplier).
+It is currently in use by another Gradle instance. Owner PID: 25584
+```
+
+**원인**  
+이전 빌드를 bash `&` 백그라운드로 실행하여 프로세스가 살아있는 상태에서 새 빌드 시작.  
+두 Gradle 인스턴스가 동일 캐시 디렉토리 lock 경합.
+
+**해결**  
+java 프로세스 전체 종료 + lock 파일 수동 삭제:
+```powershell
+Get-Process java | Stop-Process -Force
+Remove-Item "$env:USERPROFILE\.gradle\caches\8.12\md-supplier\md-supplier.lock" -Force
+```
+
+### 교훈
+- Windows 멀티 드라이브 환경(C:, D:)에서 Flutter 프로젝트는 `kotlin.incremental=false` 필수
+- build_runner는 git clone 후, pubspec.yaml 의존성 변경 후 반드시 실행
+- Gradle 백그라운드 빌드는 반드시 추적 가능한 방법으로 실행 (bash `&` 금지)
+
+---
+
+## 🐛 이슈 #7 — APK 설치 후 "요약생성 실패" 오류
+
+### 증상
+APK 설치 후 YouTube URL 입력 → "요약생성 실패" 즉시 표시.
+
+### 원인 분석
+
+**원인 1 — 자막 추출 실패 시 서버로 전송 (서버도 실패)**  
+`home_screen.dart`가 자막 추출 실패 시 `transcript: null`로 서버 요청을 보내는 구조였음.  
+서버는 transcript가 없으면 YouTube에서 직접 추출 시도 → IP 차단으로 500 에러.
+
+```
+서버 응답: {"detail":"Cannot extract transcript: YouTube is blocking requests from your IP..."}
+```
+
+**원인 2 — Claude API 응답 타임아웃**  
+Flutter 앱 수신 타임아웃 = 30초. Claude API 요약은 60~120초 소요 가능.
+
+### 해결
+
+`home_screen.dart` — 자막 추출 실패 시 즉시 에러 표시:
+```dart
+// 변경 전: catch(e) 후 서버 전송 계속
+// 변경 후:
+} catch (e) {
+    throw Exception('자막 추출 실패: 이 영상에 자막이 없거나 접근할 수 없습니다.\n($e)');
+}
+```
+
+`api_service.dart` — 타임아웃 30초 → 180초:
+```dart
+static const Duration _receiveTimeout = Duration(seconds: 180);
+```
+
+### 교훈
+- 클라이언트에서 자막 추출 실패 → 서버에도 전달할 것이 없음 → 즉시 에러 표시가 맞음
+- Claude API 같이 처리 시간이 가변적인 경우 타임아웃은 충분히 넉넉하게 설정
+
+---
+
 ## ✅ 변경 이력
 
 | 날짜 | 버전 | 변경 내용 |
@@ -283,7 +416,9 @@ Railway(Google Cloud) 환경에서는 YouTube 자막 API를 정상 사용 불가
 | 2026-06-20 | v0.01 | Railway Public Domain 미생성으로 외부 접속 불가 해결 |
 | 2026-06-20 | v0.01 | yt-dlp IP 차단 → oEmbed 전환, youtube_transcript_api 0.6.3→1.2.4 업그레이드 |
 | 2026-06-21 | v0.01 | Railway(GCP) IP + Webshare 무료 프록시 모두 YouTube 차단 → Render.com 이전 결정 |
+| 2026-06-21 | v0.01 | Flutter APK 빌드 4단계 오류 해결 (이슈 #6) |
+| 2026-06-21 | v0.01 | APK "요약생성 실패" 원인 분석 및 수정 (이슈 #7) |
 
 ---
 
-*다음 이슈 발생 시 이 파일에 ## 이슈 #6 로 추가*
+*다음 이슈 발생 시 이 파일에 ## 이슈 #8 로 추가*

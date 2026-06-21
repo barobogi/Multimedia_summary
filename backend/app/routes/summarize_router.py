@@ -18,7 +18,7 @@ logger = logging.getLogger(__name__)
 router = APIRouter()
 
 
-@router.post("/summarize", response_model=FullResult)
+@router.post("/summarize", response_model=FullResult, response_model_by_alias=True)
 async def summarize_video(request: SummaryRequest, background_tasks: BackgroundTasks):
     """
     Summarize a video and distribute across channels

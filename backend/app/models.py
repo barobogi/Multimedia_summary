@@ -1,11 +1,17 @@
 """Data models for the application"""
 
-from pydantic import BaseModel, HttpUrl
+from pydantic import BaseModel, ConfigDict, HttpUrl
+from pydantic.alias_generators import to_camel
 from typing import List, Optional
 from datetime import datetime
 
 
-class VideoMetadata(BaseModel):
+class CamelModel(BaseModel):
+    """Base model that serializes to camelCase JSON (Flutter 호환)"""
+    model_config = ConfigDict(alias_generator=to_camel, populate_by_name=True)
+
+
+class VideoMetadata(CamelModel):
     """Video metadata from platform"""
     title: str
     url: HttpUrl
@@ -16,14 +22,14 @@ class VideoMetadata(BaseModel):
     thumbnail_url: Optional[str] = None
 
 
-class TranscriptSegment(BaseModel):
+class TranscriptSegment(CamelModel):
     """Transcript segment"""
     text: str
     start_time: float
     end_time: float
 
 
-class SummaryRequest(BaseModel):
+class SummaryRequest(CamelModel):
     """Request model for summarization"""
     video_url: str
     platform: str = "youtube"
@@ -31,7 +37,7 @@ class SummaryRequest(BaseModel):
     transcript: Optional[str] = None  # 클라이언트에서 직접 추출해 전달 (클라우드 IP 차단 우회)
 
 
-class SummaryResponse(BaseModel):
+class SummaryResponse(CamelModel):
     """Response model for summarization"""
     metadata: VideoMetadata
     summary: str
@@ -44,7 +50,7 @@ class SummaryResponse(BaseModel):
     processing_time_ms: float
 
 
-class DistributionResult(BaseModel):
+class DistributionResult(CamelModel):
     """Distribution result tracking"""
     email_sent: bool = False
     obsidian_saved: bool = False
@@ -52,7 +58,7 @@ class DistributionResult(BaseModel):
     errors: List[str] = []
 
 
-class FullResult(BaseModel):
+class FullResult(CamelModel):
     """Complete result with distribution"""
     summary: SummaryResponse
     distribution: DistributionResult

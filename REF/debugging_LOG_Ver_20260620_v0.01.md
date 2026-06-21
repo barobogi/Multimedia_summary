@@ -455,6 +455,74 @@ showDialog(
 
 ---
 
+## 🐛 이슈 #9 — AndroidManifest.xml INTERNET 권한 누락
+
+### 증상
+```
+ClientException with SocketException: Failed host lookup: 'www.youtube.com'
+(OS Error: No address associated with hostname, errno = 7)
+```
+인터넷 자체 연결 불가. DNS 조회 실패.
+
+### 원인
+`AndroidManifest.xml`에 `<uses-permission android:name="android.permission.INTERNET" />` 누락.  
+Flutter **debug 빌드**는 자동으로 INTERNET 권한을 추가하지만, **release 빌드**는 명시 필수.  
+로컬 debug 테스트에서는 정상 → release APK에서만 네트워크 불가 → 원인 파악 지연됨.
+
+### 해결
+`frontend/android/app/src/main/AndroidManifest.xml` 상단에 추가:
+```xml
+<uses-permission android:name="android.permission.INTERNET" />
+```
+
+### 교훈
+- Flutter release APK 만들 때 AndroidManifest.xml INTERNET 권한은 필수 체크 항목
+- debug ↔ release 동작 차이: 네트워크, 권한, 서명, 난독화 등 다름
+- 향후 새 Flutter 프로젝트 시작 시 즉시 추가할 것
+
+---
+
+## 🐛 이슈 #10 — youtube_explode_dart XmlParserException + Dio 자동 파싱 충돌
+
+### 증상 1 (youtube_explode_dart 사용 시)
+```
+XmlParserException: Expected a single root element at 1:1
+```
+라이브러리 내부에서 YouTube 자막 응답을 XML로 파싱 실패.
+
+### 원인 1
+`youtube_explode_dart ^2.3.0`이 YouTube 최신 caption API 변경을 반영 못 함.  
+YouTube caption 응답 형식이 바뀌었거나 라이브러리 파싱 로직이 오래됨.
+
+### 해결 1
+`youtube_explode_dart` 완전 제거 → Dio로 YouTube 페이지 직접 파싱.  
+`ytInitialPlayerResponse`의 `captionTracks` 추출 → baseUrl로 JSON3 형식 자막 요청.
+
+---
+
+### 증상 2 (Dio 직접 파싱 시)
+```
+Exception: 자막 내용이 비어 있습니다.
+```
+자막 URL 가져오기는 성공했으나 파싱 결과가 빈 문자열.
+
+### 원인 2
+Dio의 기본 `responseType`이 JSON → 자막 응답을 자동으로 `Map`으로 파싱.  
+이후 `captionResp.data is String` 체크 실패 → encode/decode 우회 경로로 들어가 구조 깨짐.
+
+### 해결 2
+```dart
+Dio(BaseOptions(responseType: ResponseType.plain))  // 항상 String으로 받기
+```
+JSON3 파싱 실패 시 에러 메시지에 응답 앞부분 포함하여 다음 디버깅 지원.
+
+### 교훈
+- Dio는 Content-Type이 JSON이면 자동 파싱 → `responseType: ResponseType.plain` 명시 필요
+- 외부 라이브러리(youtube_explode_dart)는 YouTube API 변경에 취약 → 직접 HTTP 구현이 더 안정적
+- 디버깅 어려운 모바일 앱은 에러 메시지에 raw 응답 앞부분을 포함시켜야 빠르게 원인 파악 가능
+
+---
+
 ## ✅ 변경 이력
 
 | 날짜 | 버전 | 변경 내용 |
@@ -467,7 +535,9 @@ showDialog(
 | 2026-06-21 | v0.01 | Flutter APK 빌드 4단계 오류 해결 (이슈 #6) |
 | 2026-06-21 | v0.01 | APK "요약생성 실패" 원인 분석 및 수정 (이슈 #7) |
 | 2026-06-21 | v0.01 | youtu.be URL 파싱 실패 + 에러 다이얼로그 개선 (이슈 #8) |
+| 2026-06-21 | v0.01 | AndroidManifest INTERNET 권한 누락 → release APK 네트워크 불가 (이슈 #9) |
+| 2026-06-21 | v0.01 | youtube_explode_dart 제거 + Dio responseType plain 강제 (이슈 #10) |
 
 ---
 
-*다음 이슈 발생 시 이 파일에 ## 이슈 #9 로 추가*
+*다음 이슈 발생 시 이 파일에 ## 이슈 #11 로 추가*

@@ -1,16 +1,13 @@
-"""Claude API service for summarization and analysis"""
+# claude_service.py — Claude Code CLI subprocess로 요약 생성 (Anthropic API 크레딧 Zero)
 
 import logging
 import json
+import asyncio
 from typing import Dict, List, Optional
-import anthropic
 
 from ..models import VideoMetadata
-from ..config import settings
 
 logger = logging.getLogger(__name__)
-
-client = anthropic.Anthropic(api_key=settings.anthropic_api_key)
 
 
 async def summarize_and_analyze(
@@ -19,7 +16,7 @@ async def summarize_and_analyze(
     language: str = "ko"
 ) -> Dict:
     """
-    Use Claude to summarize and analyze transcript
+    Claude Code CLI subprocess로 자막 요약/분석 (API 크레딧 소비 없음).
 
     Returns:
         {
@@ -32,38 +29,41 @@ async def summarize_and_analyze(
         }
     """
 
-    # Truncate if too long
-    max_chars = 50000  # Reasonable limit for context
+    max_chars = 50000
     if len(transcript_text) > max_chars:
         logger.warning(f"Transcript too long ({len(transcript_text)} chars), truncating to {max_chars}")
         transcript_text = transcript_text[:max_chars] + "... [내용 이어짐]"
 
     prompt = build_prompt(transcript_text, metadata, language)
 
-    logger.info(f"Calling Claude API ({settings.claude_model})")
+    logger.info("Calling Claude via CLI subprocess (API Zero mode)")
 
     try:
-        message = client.messages.create(
-            model=settings.claude_model,
-            max_tokens=settings.max_tokens_summary,
-            messages=[
-                {
-                    "role": "user",
-                    "content": prompt
-                }
-            ]
+        proc = await asyncio.create_subprocess_exec(
+            "claude", "--output-format", "json", "--print",
+            stdin=asyncio.subprocess.PIPE,
+            stdout=asyncio.subprocess.PIPE,
+            stderr=asyncio.subprocess.PIPE,
+        )
+        stdout, stderr = await asyncio.wait_for(
+            proc.communicate(input=prompt.encode("utf-8")),
+            timeout=120,
         )
 
-        # Parse response
-        response_text = message.content[0].text
+        if proc.returncode != 0:
+            raise RuntimeError(f"Claude CLI error: {stderr.decode('utf-8', errors='replace')}")
 
-        # Try to extract JSON from response
-        result = parse_claude_response(response_text)
+        # --output-format json 구조: {"result": "...", "cost_usd": 0, ...}
+        outer = json.loads(stdout.decode("utf-8"))
+        response_text = outer.get("result", stdout.decode("utf-8"))
 
-        return result
+        return parse_claude_response(response_text)
 
+    except asyncio.TimeoutError:
+        logger.error("Claude CLI timeout (120s)")
+        raise
     except Exception as e:
-        logger.error(f"Claude API error: {str(e)}")
+        logger.error(f"Claude CLI error: {str(e)}")
         raise
 
 

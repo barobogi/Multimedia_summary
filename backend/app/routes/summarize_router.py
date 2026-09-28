@@ -1,6 +1,8 @@
 """Summarization endpoint router"""
 
-from fastapi import APIRouter, HTTPException, BackgroundTasks
+import os
+from typing import Optional
+from fastapi import APIRouter, HTTPException, BackgroundTasks, Header, Depends
 import logging
 from datetime import datetime
 
@@ -17,8 +19,19 @@ from ..services import (
 logger = logging.getLogger(__name__)
 router = APIRouter()
 
+MULTIMEDIA_AUTH_TOKEN = os.environ.get("MULTIMEDIA_AUTH_TOKEN")
 
-@router.post("/summarize", response_model=FullResult, response_model_by_alias=True)
+
+def verify_summary_access(authorization: Optional[str] = Header(None)):
+    """요약/Gemini 엔드포인트 접근 제어 (Fail-Closed, 하드코딩 폴백 없음)"""
+    if not MULTIMEDIA_AUTH_TOKEN:
+        raise HTTPException(status_code=503, detail="MULTIMEDIA_AUTH_TOKEN not configured")
+    expected = f"Bearer {MULTIMEDIA_AUTH_TOKEN}"
+    if not authorization or authorization.strip() != expected:
+        raise HTTPException(status_code=401, detail="Unauthorized")
+
+
+@router.post("/summarize", response_model=FullResult, response_model_by_alias=True, dependencies=[Depends(verify_summary_access)])
 async def summarize_video(request: SummaryRequest, background_tasks: BackgroundTasks):
     """
     Summarize a video and distribute across channels
@@ -137,7 +150,7 @@ class GeminiTestRequest(BaseModel):
     youtube_url: str
     prompt: str = "이 YouTube 영상을 한국어로 요약해주세요."
 
-@router.get("/gemini-models")
+@router.get("/gemini-models", dependencies=[Depends(verify_summary_access)])
 async def gemini_list_models():
     """사용 가능한 Gemini 모델 목록 확인"""
     import google.generativeai as genai
@@ -148,7 +161,7 @@ async def gemini_list_models():
     models = [m.name for m in genai.list_models() if "generateContent" in m.supported_generation_methods]
     return {"models": models}
 
-@router.post("/gemini-test")
+@router.post("/gemini-test", dependencies=[Depends(verify_summary_access)])
 async def gemini_test(request: GeminiTestRequest):
     """
     Gemini API로 YouTube URL 직접 요약 테스트.

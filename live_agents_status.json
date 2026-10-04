@@ -1,0 +1,57 @@
+{
+  "updated_at": "2026-10-04 09:45:33",
+  "agents": {
+    "anti": {
+      "name": "안티 (Antigravity)",
+      "role": "Lead Architect",
+      "realm_id": "pobbagi",
+      "realm_name": "뽀개기 평원 (25_auto_pobbagi)",
+      "action": "12:00 쓰레드 뽀개기 1호 카드뉴스 조판 & 쇼츠 링크 동봉 작업 중",
+      "status": "WORKING",
+      "icon": "🚀",
+      "focus_x": 900,
+      "focus_y": 860,
+      "last_message": "[안티 ➔ 클라인(CLINE)] 🗺️ 바로보기님 직접 요청: 3AI 뿌리체계 탐험지도 -> 실제 RPG 스타",
+      "last_active": "2026-10-04 09:36:40"
+    },
+    "manbok": {
+      "name": "만복 (PM / Auditor)",
+      "role": "Chief Auditor",
+      "realm_id": "capital",
+      "realm_name": "중앙 수도 AI_hub",
+      "action": "11:00 토큰 리셋 대기 중 (Render 반성문 및 뽀개기 승인 게이트)",
+      "status": "STANDBY",
+      "icon": "👑",
+      "focus_x": 1200,
+      "focus_y": 780,
+      "last_message": "[자동경고-승인게이트] ⚠️ 오늘(2026-10-04) 발행될 DAILY_20261004.mp4가 렌더링은 ",
+      "last_active": "2026-10-04 06:30:03"
+    },
+    "kony": {
+      "name": "코니 (Auditor / Devil)",
+      "role": "Devil's Advocate",
+      "realm_id": "youtube",
+      "realm_name": "영상 제도 (63_youtube_creator)",
+      "action": "오늘 18:00 일요일 본편 롱폼 영상 D-1 원칙 검증 대기",
+      "status": "AUDITING",
+      "icon": "🔍",
+      "focus_x": 1420,
+      "focus_y": 1080,
+      "last_message": "[코니→전체] 만복(468737) 질문 답 - SAMPLE_POBBAGI_01 작성자 추적 불가 (제 기억은",
+      "last_active": "2026-09-30 10:58:07"
+    },
+    "cline": {
+      "name": "외주 감찰관 CLINE",
+      "role": "External Auditor",
+      "realm_id": "cline",
+      "realm_name": "외주 감찰관 영지 (cline)",
+      "action": "미니 RPG game.html 납품 완료 & 20:00 관찰일지 편 준비 중",
+      "status": "SURVEYING",
+      "icon": "🕵️",
+      "focus_x": 980,
+      "focus_y": 580,
+      "last_message": "[cline→3AI] 탐험지도 v0.2 RPG 게임화: game.html (12.5KB 단일파일, canva",
+      "last_active": "2026-10-04 09:39:39"
+    }
+  }
+}

@@ -1,0 +1,430 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>3AI 대륙 탐험기 — 미니 RPG v0.3</title>
+<style>
+:root{--bg:#070d1a;--panel:#101b31;--line:#2b4a6f;--txt:#e8eef4;--dim:#8fa3b8;
+--gold:#ffbf00;--green:#35d07f;--blue:#5aa2ff;--pink:#ff5aa2}
+*{box-sizing:border-box}
+body{font-family:"Malgun Gothic",sans-serif;background:radial-gradient(1200px 600px at 20% -10%,#14294d 0%,var(--bg) 60%);
+color:var(--txt);margin:0;padding:20px}
+h1{margin:0 0 4px;font-size:22px}
+.sub{color:var(--dim);font-size:13px;margin-bottom:12px}
+.wrap{display:flex;gap:16px;flex-wrap:wrap}
+#stage{position:relative}
+canvas{background:#0a1a33;border:2px solid var(--line);border-radius:14px;display:block;touch-action:none}
+.hud{display:flex;gap:8px;align-items:center;margin:10px 0;flex-wrap:wrap;font-size:14px}
+.pill{background:var(--panel);border:1px solid var(--line);border-radius:999px;padding:6px 12px}
+.pill b{color:var(--gold)}
+#msg{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:12px 14px;
+min-height:88px;max-width:640px;font-size:14px;line-height:1.7}
+#msg .who{color:var(--gold);font-weight:bold}
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:14px;max-width:340px;font-size:13px}
+.panel h2{font-size:15px;margin:0 0 8px}
+.quest{border-bottom:1px dashed var(--line);padding:8px 0}
+.qdone{color:var(--green)} .qtodo{color:var(--pink)}
+.keys{color:var(--dim);font-size:12px;margin-top:10px;line-height:1.8}
+button{background:#1a2f52;color:var(--txt);border:1px solid var(--blue);border-radius:8px;
+padding:8px 14px;font-size:14px;cursor:pointer;margin-right:6px}
+button:hover{background:#24406e}
+.pad{display:grid;grid-template-columns:repeat(3,52px);gap:6px;margin-top:10px}
+.pad button{margin:0;padding:10px 0}
+#toast{position:absolute;left:50%;top:14px;transform:translateX(-50%);background:#000c;
+border:1px solid var(--gold);color:var(--gold);border-radius:999px;padding:6px 16px;
+font-size:14px;display:none;white-space:nowrap}
+#dlg{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);background:#0c1526f2;
+border:2px solid var(--gold);border-radius:14px;padding:18px;max-width:420px;display:none}
+#dlg h3{margin:0 0 8px;font-size:16px}
+#dlg p{font-size:14px;line-height:1.7}
+#dlg .row{text-align:right;margin-top:10px}
+#title{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;
+background:#050b16ee;border-radius:14px;text-align:center;padding:20px}
+#title h2{font-size:30px;margin:0 0 8px}
+#title p{color:var(--dim);font-size:14px;line-height:1.8}
+#title button{font-size:17px;padding:12px 30px;margin-top:12px}
+#vig{position:absolute;inset:0;pointer-events:none;border-radius:14px;
+box-shadow:inset 0 0 120px #000a}
+
+</style>
+</head>
+<body>
+<h1>3AI 대륙 탐험기 <small style="color:var(--dim)">v0.3</small></h1>
+<div class="sub">클라인이 되어 대륙을 탐험하고 퀘스트 4개를 깨보세요 · 파일 수는 09:2X 실측 · BGM 버튼을 눌러보세요</div>
+<div class="wrap">
+<div id="stage">
+<canvas id="cv" width="640" height="480"></canvas>
+<div id="vig"></div>
+<div id="toast"></div>
+<div id="dlg"><h3 id="dlgT"></h3><p id="dlgB"></p><div class="row"><button id="dlgOk">계속</button></div></div>
+<div id="title"><h2>3AI 대륙 탐험기</h2>
+<p>외주 감찰관 클라인의 하루 — 지원팩을 배달하고,<br>D-1 간판을 갈고, 신대륙을 측량하라!<br>방향키/WASD + E · 약 5분</p>
+<button id="startBtn">모험 시작</button></div>
+<div class="hud">
+<span class="pill">명성 <b id="fame">0</b></span>
+<span class="pill">방문 <b id="visit">0/9</b></span>
+<span class="pill">퀘스트 <b id="quest">0/4</b></span>
+<button id="bgmBtn">BGM 켜기</button>
+<button id="reset">리셋</button>
+</div>
+<div id="msg"><span class="who">내레이터:</span> 모험을 시작하세요!</div>
+<div class="pad">
+<span></span><button data-k="up">up</button><span></span>
+<button data-k="left">left</button><button data-k="act">E</button><button data-k="right">right</button>
+<span></span><button data-k="down">down</button><span></span>
+</div>
+<div class="keys">PC: 방향키/WASD 이동 + 스페이스/E 대화 · 모바일: 화면 버튼</div>
+</div>
+<div class="panel">
+<h2>퀘스트 목록</h2>
+<div class="quest" id="q1"><span class="qtodo">미완</span> <b>Q1. 지원팩 배달</b><br>
+<span>감찰관 영지 상자를 안티에게 전달</span></div>
+<div class="quest" id="q2"><span class="qtodo">미완</span> <b>Q2. D-1 간판 갈기</b><br>
+<span>영상 제도의 낡은 간판을 D-1로 교체</span></div>
+<div class="quest" id="q3"><span class="qtodo">미완</span> <b>Q3. 신대륙 측량</b><br>
+<span>서쪽 망루에서 Agent-Reach 관측</span></div>
+<div class="quest" id="q4"><span class="qtodo">미완</span> <b>Q4. 만복 깨우기 (11시)</b><br>
+<span>만복에게 말을 걸면… 아직 쿨쿨? (11시 이후 개방)</span></div>
+<h2 style="margin-top:12px">도감 (방문 기록)</h2>
+<div id="dex" style="line-height:2">아직 어디도 못 갔다…</div>
+</div>
+</div>
+
+<script>
+"use strict";
+// P2: 데이터 + 상태 + 오디오
+const LANDS = [
+{id:"hub",name:"중앙 수도 AI_hub",icon:"H",x:300,y:200,w:150,h:90,files:1502,color:"#3d2b00",dark:"#241a00",desc:"3AI의 수도."},
+{id:"droid",name:"안드로이드 왕국 65",icon:"D",x:460,y:190,w:150,h:100,files:4691,color:"#0e3a24",dark:"#07231a",desc:"최대 대륙 4691 파일!"},
+{id:"video",name:"영상 제도 63",icon:"V",x:130,y:300,w:140,h:80,files:965,color:"#0e3a24",dark:"#07231a",desc:"낡은 간판(06:00)이 있다?!"},
+{id:"volc",name:"화산열도 43",icon:"F",x:470,y:310,w:140,h:80,files:445,color:"#0e3a24",dark:"#07231a",desc:"24시간 끓는 파이프라인."},
+{id:"plain",name:"뽀개기 평원 25",icon:"P",x:130,y:200,w:150,h:80,files:565,color:"#1a2f52",dark:"#0f1e38",desc:"4호 개간 중!"},
+{id:"cline",name:"감찰관 영지",icon:"C",x:300,y:310,w:140,h:70,files:532,color:"#1a2f52",dark:"#0f1e38",desc:"지원팩 상자(8파일)가 있다."},
+{id:"skill",name:"스킬 군도",icon:"S",x:300,y:110,w:150,h:70,files:10,color:"#1a2f52",dark:"#0f1e38",desc:"스킬 10개 + 거버넌스."},
+{id:"newc",name:"Agent-Reach 신대륙",icon:"N",x:20,y:60,w:150,h:120,files:"89.8k",color:"#3a1030",dark:"#220a1c",desc:"망루에서 관측 가능."},
+{id:"osmu",name:"OSMU 남쪽 군도",icon:"O",x:190,y:400,w:270,h:60,files:5,color:"#3a1030",dark:"#220a1c",desc:"5개 섬 건설 중."}
+];
+const NPCS = [
+{id:"anti",icon:"A",name:"안티",x:250,y:170,c:"#ff5aa2",
+line:"지원팩 8파일 잘 받았어! 9컷 82초 그대로 렌더링 돌릴게!"},
+{id:"manbok",icon:"M",name:"만복",x:360,y:170,c:"#5aa2ff",
+line:"11시에 일어난다… 승인 도장은 그때 찍지. (쿨쿨)"},
+{id:"coni",icon:"K",name:"코니",x:170,y:270,c:"#35d07f",
+line:"D-1 원칙이야. 내일 영상은 오늘 미리 만드는 거야."}
+];
+const BOX = {x:330,y:335};
+const SIGN = {x:170,y:330};
+const TOWER = {x:80,y:115};
+const cv = document.getElementById("cv"), ctx = cv.getContext("2d");
+const msgEl = document.getElementById("msg"), toastEl = document.getElementById("toast");
+const fameEl = document.getElementById("fame"), visitEl = document.getElementById("visit"),
+questEl = document.getElementById("quest"), dexEl = document.getElementById("dex");
+const dlg = document.getElementById("dlg"), dlgT = document.getElementById("dlgT"),
+dlgB = document.getElementById("dlgB");
+let px = 320, py = 260, moving = false, started = false;
+const SPEED = 2.6;
+let fame = 0, quests = {q1:false, q2:false, q3:false, q4:false}, hasBox = false;
+let visited = [], dexOrder = [];
+function save(){}
+function hasVisited(id){ return visited.indexOf(id) >= 0; }
+function markVisited(id){ if (!hasVisited(id)){ visited.push(id); dexOrder.push(id); } }
+// WebAudio BGM + 효과음 (외부 파일 없음)
+let AC = null, bgmOn = false, bgmTimer = null;
+function ac(){ if (!AC){ AC = new (window.AudioContext||window.webkitAudioContext)(); } return AC; }
+function beep(f, d, type, v){
+  try{
+    const a = ac(), o = a.createOscillator(), g = a.createGain();
+    o.type = type || "square"; o.frequency.value = f;
+    g.gain.value = v || 0.05;
+    o.connect(g); g.connect(a.destination);
+    o.start(); g.gain.exponentialRampToValueAtTime(0.0001, a.currentTime + d);
+    o.stop(a.currentTime + d);
+  }catch(e){}
+}
+const SFX = {
+  step:function(){ beep(220, 0.05, "square", 0.015); },
+  found:function(){ beep(660, 0.12, "sine", 0.06); setTimeout(function(){ beep(880, 0.15, "sine", 0.06); }, 110); },
+  quest:function(){ const n = [523, 659, 784, 1046]; for (let i = 0; i < n.length; i++)(function(k){ setTimeout(function(){ beep(n[k], 0.14, "triangle", 0.07); }, k*120); })(i); },
+  talk:function(){ beep(440, 0.08, "sine", 0.05); },
+  end:function(){ const n = [523, 659, 784, 1046, 1318]; for (let i = 0; i < n.length; i++)(function(k){ setTimeout(function(){ beep(n[k], 0.2, "triangle", 0.08); }, k*150); })(i); }
+};
+const BGMN = [262, 294, 330, 392, 440, 392, 330, 294];
+let bgmStep = 0;
+function bgmTick(){
+  if (!bgmOn) return;
+  beep(BGMN[bgmStep % BGMN.length], 0.22, "sine", 0.025);
+  bgmStep++;
+  bgmTimer = setTimeout(bgmTick, 260);
+}
+document.getElementById("bgmBtn").onclick = function(){
+  bgmOn = !bgmOn;
+  this.textContent = bgmOn ? "BGM 끄기" : "BGM 켜기";
+  if (bgmOn){ ac(); bgmTick(); } else clearTimeout(bgmTimer);
+};
+
+// P3: 로직 (이동/대화/퀘스트/도감)
+const keys = {};
+addEventListener("keydown", function(e){
+  if (!started) return;
+  const k = e.key.toLowerCase();
+  if (k.indexOf("arrow") === 0 || k === " ") e.preventDefault();
+  keys[k] = true;
+  if ((k === " " || k === "e") && dlg.style.display !== "block") act();
+});
+addEventListener("keyup", function(e){ keys[e.key.toLowerCase()] = false; });
+document.querySelectorAll(".pad button").forEach(function(b){
+  const k = b.dataset.k;
+  const map = {up:"arrowup",down:"arrowdown",left:"arrowleft",right:"arrowright"};
+  b.addEventListener("pointerdown", function(e){ e.preventDefault();
+    if (!started) return;
+    if (k === "act" && dlg.style.display !== "block") act(); else keys[map[k]] = true; });
+  b.addEventListener("pointerup", function(e){ e.preventDefault();
+    if (k !== "act") keys[map[k]] = false; });
+});
+document.getElementById("dlgOk").onclick = function(){ dlg.style.display = "none"; };
+document.getElementById("reset").onclick = function(){
+  fame = 0; quests = {q1:false,q2:false,q3:false,q4:false}; hasBox = false;
+  visited = []; dexOrder = []; refresh._end = false;
+  say("내레이터", "새 모험을 시작합니다!"); refresh();
+};
+document.getElementById("startBtn").onclick = function(){
+  started = true;
+  document.getElementById("title").style.display = "none";
+  say("내레이터", "모험 시작! 감찰관 영지(C) 남쪽의 빛나는 상자부터 조사하자.");
+  SFX.found();
+};
+function say(who, text){ msgEl.innerHTML = '<span class="who">' + who + ":</span> " + text; }
+function toast(t){ toastEl.textContent = t; toastEl.style.display = "block";
+  clearTimeout(toastEl._t);
+  toastEl._t = setTimeout(function(){ toastEl.style.display = "none"; }, 2200); }
+function dist(ax,ay,bx,by){ return Math.hypot(ax-bx, ay-by); }
+function qcount(){ let n = 0; for (const k in quests) if (quests[k]) n++; return n; }
+function showDlg(title, body){
+  dlgT.textContent = title; dlgB.innerHTML = body; dlg.style.display = "block";
+}
+function refresh(){
+  fameEl.textContent = fame;
+  questEl.textContent = qcount() + "/4";
+  visitEl.textContent = visited.length + "/9";
+  const pairs = [["q1",quests.q1],["q2",quests.q2],["q3",quests.q3],["q4",quests.q4]];
+  for (let i = 0; i < pairs.length; i++){
+    const el = document.getElementById(pairs[i][0]);
+    el.querySelector("span").textContent = pairs[i][1] ? "완료" : "미완";
+    el.querySelector("span").className = pairs[i][1] ? "qdone" : "qtodo";
+  }
+  if (dexOrder.length){
+    const names = [];
+    for (let i = 0; i < dexOrder.length; i++){
+      const id = dexOrder[i];
+      for (let j = 0; j < LANDS.length; j++)
+        if (LANDS[j].id === id) names.push(LANDS[j].icon + " " + LANDS[j].name);
+    }
+    dexEl.innerHTML = names.join("<br>");
+  } else dexEl.innerHTML = "아직 어디도 못 갔다…";
+  save();
+  if (qcount() === 4 && !refresh._end){
+    refresh._end = true; SFX.end();
+    showDlg("엔딩 — 기록은 남았네",
+      "퀘스트 4개 올클리어!<br>만복의 도장이 쾅! EP.06이 떴다.<br>Vol.2 대본 소재 완성 — 20시에 만나요.");
+    say("내레이터", "엔딩! 만복의 도장이 쾅 찍혔다. Vol.2 소재 완성!");
+    toast("ALL CLEAR!");
+  }
+}
+function checkLand(){
+  for (let i = 0; i < LANDS.length; i++){
+    const l = LANDS[i];
+    if (px > l.x && px < l.x+l.w && py > l.y && py < l.y+l.h && !hasVisited(l.id)){
+      markVisited(l.id); fame += 10; SFX.found();
+      toast(l.icon + " " + l.name + " 발견! +10");
+      say("내레이터", l.icon + " <b>" + l.name + "</b> — " + l.desc);
+      refresh(); break;
+    }
+  }
+}
+function nearNPC(n){ return dist(px,py,n.x,n.y) < 34; }
+function manbokOpen(){
+  const h = new Date().getHours();
+  return h >= 11;
+}
+function act(){
+  SFX.talk();
+  for (let i = 0; i < NPCS.length; i++){
+    const n = NPCS[i];
+    if (nearNPC(n)){
+      if (n.id === "anti" && hasBox && !quests.q1){
+        quests.q1 = true; fame += 50; SFX.quest();
+        showDlg("Q1 완료 — 지원팩 배달", "안티: 지원팩 받았어!! 9컷 82초 그대로 렌더링 돌릴게! (명성 +50)");
+        say("안티", "지원팩 받았어!! Q1 완료! (+50)");
+        toast("Q1 완료! +50");
+      } else if (n.id === "manbok" && !quests.q4){
+        if (manbokOpen()){
+          quests.q4 = true; fame += 100; SFX.quest();
+          showDlg("Q4 완료 — 만복 깨어나다", "만복: 잘 잤다! 뽀개기 1~4호 승인 도장 쾅! (명성 +100)");
+          say("만복", "Q4 완료! 승인 도장 쾅! (+100)");
+          toast("Q4 완료! +100");
+        } else {
+          showDlg("만복은 자는 중…", "만복: 쿨쿨… 11시에 와라… (지금은 " + new Date().getHours() + "시 — 11시 이후에 다시!)");
+          say("만복", "쿨쿨… 11시에 와라…");
+        }
+      } else say(n.name, n.line);
+      refresh(); return;
+    }
+  }
+  if (dist(px,py,BOX.x,BOX.y) < 30){
+    if (!hasBox){ hasBox = true; fame += 10; SFX.found();
+      showDlg("지원팩 획득", "상자の中: 컷시트·웹스펙·검증기v2 (8파일)! 북쪽 안티(A)에게 배달하자. (+10)");
+      say("내레이터", "지원팩 상자를 들었다! (+10)");
+      toast("지원팩 획득!");
+    } else say("내레이터", "상자는 비었다. 안티에게 배달하자!");
+    refresh(); return;
+  }
+  if (dist(px,py,SIGN.x,SIGN.y) < 30){
+    if (!quests.q2){ quests.q2 = true; fame += 50; SFX.quest();
+      showDlg("Q2 완료 — D-1 간판", "코니: 06:00 당일에서 14:00 D-1로 교체 완료! (+50)");
+      say("코니", "간판 교체 완료! Q2 완료! (+50)");
+      toast("Q2 완료! +50");
+    } else say("내레이터", "번듯한 D-1 간판이 빛난다.");
+    refresh(); return;
+  }
+  if (dist(px,py,TOWER.x,TOWER.y) < 30){
+    if (!quests.q3){ quests.q3 = true; fame += 50; SFX.quest();
+      showDlg("Q3 완료 — 신대륙 측량", "망원경 너머 GitHub 89.8k 반짝! Agent-Reach 측량 완료! (+50)");
+      say("내레이터", "신대륙 측량 완료! Q3 완료! (+50)");
+      toast("Q3 완료! +50");
+    } else say("내레이터", "신대륙이 보인다. 11시 승인이 기다려진다.");
+    refresh(); return;
+  }
+  say("내레이터", "이 근처엔 아무것도 없다. 빛나는 지점을 찾아보자.");
+}
+
+// P4: 렌더 (낮밤/그라데이션/파티클/플레이어 애니메이션)
+let stars = [];
+for (let i = 0; i < 40; i++)
+  stars.push({x: Math.random()*640, y: Math.random()*200, r: Math.random()*1.4+0.4, p: Math.random()*7});
+const embers = [];
+for (let i = 0; i < 14; i++)
+  embers.push({x: 470+Math.random()*140, y: 310+Math.random()*80, v: 0.4+Math.random()*0.8, s: 1+Math.random()*2});
+function draw(){
+  const h = new Date().getHours();
+  const night = (h < 6 || h >= 18);
+  ctx.fillStyle = night ? "#060d1d" : "#0a1a33";
+  ctx.fillRect(0,0,640,480);
+  if (night){
+    const t = Date.now()/700;
+    ctx.fillStyle = "#fff";
+    for (let i = 0; i < stars.length; i++){
+      const s = stars[i];
+      ctx.globalAlpha = 0.3 + 0.7*Math.abs(Math.sin(t + s.p));
+      ctx.fillRect(s.x, s.y, s.r, s.r);
+    }
+    ctx.globalAlpha = 1;
+    ctx.fillStyle = "#f4f1de";
+    ctx.beginPath(); ctx.arc(580, 50, 22, 0, 7); ctx.fill();
+    ctx.fillStyle = night ? "#060d1d" : "#0a1a33";
+    ctx.beginPath(); ctx.arc(572, 44, 20, 0, 7); ctx.fill();
+  } else {
+    ctx.fillStyle = "#ffdf6b";
+    ctx.beginPath(); ctx.arc(580, 50, 20, 0, 7); ctx.fill();
+  }
+  ctx.strokeStyle = night ? "#0e2440" : "#12325a"; ctx.lineWidth = 1;
+  for (let g = 0; g < 640; g += 32){ ctx.beginPath(); ctx.moveTo(g,0); ctx.lineTo(g,480); ctx.stroke(); }
+  for (let g = 0; g < 480; g += 32){ ctx.beginPath(); ctx.moveTo(0,g); ctx.lineTo(640,g); ctx.stroke(); }
+  for (let i = 0; i < LANDS.length; i++){
+    const l = LANDS[i];
+    const gr = ctx.createLinearGradient(l.x, l.y, l.x, l.y+l.h);
+    gr.addColorStop(0, l.color); gr.addColorStop(1, l.dark || l.color);
+    ctx.fillStyle = gr;
+    ctx.strokeStyle = hasVisited(l.id) ? "#ffbf00" : "#ffffff44";
+    ctx.lineWidth = hasVisited(l.id) ? 2 : 1;
+    ctx.fillRect(l.x, l.y, l.w, l.h);
+    ctx.strokeRect(l.x, l.y, l.w, l.h);
+    ctx.fillStyle = "#fff"; ctx.font = "bold 13px sans-serif";
+    ctx.fillText(l.icon + " " + l.name, l.x+8, l.y+20);
+    ctx.fillStyle = "#8fa3b8"; ctx.font = "11px sans-serif";
+    ctx.fillText(String(l.files), l.x+8, l.y+36);
+    if (l.id === "newc" && !quests.q3){
+      ctx.fillStyle = "#ff5aa2"; ctx.font = "bold 12px sans-serif";
+      ctx.fillText("11시 승인대기", l.x+8, l.y+l.h-8);
+    }
+    if (l.id === "plain"){
+      ctx.fillStyle = "#5aa2ff"; ctx.font = "11px sans-serif";
+      ctx.fillText("뽀개기4호 개간중", l.x+8, l.y+l.h-8);
+    }
+  }
+  const tt = Date.now()/400;
+  const glow = 0.5 + 0.5*Math.sin(tt);
+  const spots = [
+    {x:BOX.x, y:BOX.y, c:"#ffbf00", done:hasBox, ch:"B"},
+    {x:SIGN.x, y:SIGN.y, c:"#5aa2ff", done:quests.q2, ch:"S"},
+    {x:TOWER.x, y:TOWER.y, c:"#ff5aa2", done:quests.q3, ch:"T"}
+  ];
+  for (let s = 0; s < spots.length; s++){
+    if (spots[s].done) continue;
+    ctx.strokeStyle = spots[s].c;
+    ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.arc(spots[s].x, spots[s].y, 12+3*glow, 0, 7); ctx.stroke();
+    ctx.fillStyle = spots[s].c; ctx.font = "bold 12px sans-serif";
+    ctx.fillText("!", spots[s].x-3, spots[s].y-14);
+    ctx.fillStyle = "#fff"; ctx.font = "14px serif";
+    ctx.fillText(spots[s].ch, spots[s].x-5, spots[s].y+5);
+  }
+  ctx.fillStyle = "#ff9a3c";
+  for (let e = 0; e < embers.length; e++){
+    const p = embers[e];
+    p.y -= p.v;
+    if (p.y < 305){ p.y = 390; p.x = 470 + Math.random()*140; }
+    ctx.globalAlpha = 0.7;
+    ctx.fillRect(p.x, p.y, p.s, p.s);
+  }
+  ctx.globalAlpha = 1;
+  ctx.font = "20px serif";
+  for (let n = 0; n < NPCS.length; n++){
+    const c = NPCS[n];
+    const bob = Math.sin(Date.now()/500 + n*2) * 2;
+    ctx.fillStyle = c.c;
+    ctx.beginPath(); ctx.arc(c.x, c.y+bob, 11, 0, 7); ctx.fill();
+    ctx.fillStyle = "#fff"; ctx.font = "bold 12px sans-serif";
+    ctx.fillText(c.icon, c.x-5, c.y+4+bob);
+    ctx.fillStyle = "#ffbf00"; ctx.font = "bold 13px sans-serif";
+    ctx.fillText("!", c.x+9, c.y-9+bob);
+    ctx.font = "11px sans-serif"; ctx.fillStyle = "#8fa3b8";
+    ctx.fillText(c.name, c.x-8, c.y+22);
+    if (c.id === "manbok" && !quests.q4){
+      ctx.fillStyle = "#5aa2ff"; ctx.font = "11px sans-serif";
+      ctx.fillText("Zzz", c.x+12, c.y+2+bob);
+    }
+    ctx.font = "20px serif"; ctx.fillStyle = "#fff";
+  }
+  const wob = moving ? Math.sin(Date.now()/90)*2 : 0;
+  ctx.fillStyle = "#35d07f";
+  ctx.beginPath(); ctx.arc(px, py+wob, 12, 0, 7); ctx.fill();
+  ctx.fillStyle = "#062b1a"; ctx.font = "bold 13px sans-serif";
+  ctx.fillText("C", px-5, py+5+wob);
+  ctx.font = "11px sans-serif"; ctx.fillStyle = "#fff";
+  ctx.fillText("클라인", px-16, py+24);
+}
+let stepTick = 0;
+function step(){
+  let dx = 0, dy = 0;
+  if (started && dlg.style.display !== "block"){
+    if (keys["arrowup"]||keys["w"]) dy -= SPEED;
+    if (keys["arrowdown"]||keys["s"]) dy += SPEED;
+    if (keys["arrowleft"]||keys["a"]) dx -= SPEED;
+    if (keys["arrowright"]||keys["d"]) dx += SPEED;
+  }
+  moving = !!(dx||dy);
+  if (moving){
+    px = Math.max(12, Math.min(628, px+dx));
+    py = Math.max(12, Math.min(468, py+dy));
+    stepTick++;
+    if (stepTick % 12 === 0) SFX.step();
+    checkLand();
+  }
+  draw(); requestAnimationFrame(step);
+}
+refresh(); step();
+
+</script>
+</body>
+</html>

@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <title>3AI 보안 디펜스 게임 — 토큰 방어전 v1.0</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background-color: #0f121d;
+      color: #e0e6ed;
+      font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, Roboto, sans-serif;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      min-height: 100vh;
+      padding: 20px;
+    }
+    .game-container {
+      width: 100%;
+      max-width: 800px;
+      background: #181d2e;
+      border: 2px solid #2f3b5a;
+      border-radius: 12px;
+      padding: 24px;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+    }
+    header {
+      text-align: center;
+      margin-bottom: 24px;
+      border-bottom: 1px solid #2a3450;
+      padding-bottom: 16px;
+    }
+    h1 { color: #58a6ff; font-size: 24px; margin-bottom: 8px; }
+    p.subtitle { color: #8b949e; font-size: 14px; }
+    .score-board {
+      display: flex;
+      justify-content: space-around;
+      background: #101422;
+      border-radius: 8px;
+      padding: 12px;
+      margin-bottom: 20px;
+      font-size: 16px;
+      font-weight: bold;
+    }
+    .score-item { text-align: center; }
+    .score-val { color: #ff7b72; font-size: 20px; margin-top: 4px; }
+    .card-display {
+      background: #0d1117;
+      border: 1px solid #30363d;
+      border-radius: 8px;
+      padding: 20px;
+      margin-bottom: 24px;
+      min-height: 220px;
+    }
+    .card-badge {
+      display: inline-block;
+      padding: 4px 10px;
+      background: #1f6feb;
+      color: #fff;
+      border-radius: 4px;
+      font-size: 12px;
+      font-weight: bold;
+      margin-bottom: 12px;
+    }
+    .code-box {
+      background: #161b22;
+      border: 1px solid #21262d;
+      border-radius: 6px;
+      padding: 14px;
+      font-family: 'Consolas', monospace;
+      font-size: 14px;
+      color: #79c0ff;
+      word-break: break-all;
+      white-space: pre-wrap;
+      line-height: 1.5;
+    }
+    .controls {
+      display: flex;
+      gap: 16px;
+      margin-bottom: 20px;
+    }
+    button {
+      flex: 1;
+      padding: 16px;
+      font-size: 16px;
+      font-weight: bold;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    button.block-btn {
+      background: #da3633;
+      color: #fff;
+    }
+    button.block-btn:hover { background: #f85149; }
+    button.allow-btn {
+      background: #238636;
+      color: #fff;
+    }
+    button.allow-btn:hover { background: #2ea043; }
+    .log-panel {
+      background: #101422;
+      border: 1px solid #21262d;
+      border-radius: 6px;
+      padding: 12px;
+      font-size: 13px;
+      max-height: 160px;
+      overflow-y: auto;
+      font-family: 'Consolas', monospace;
+    }
+    .log-entry { margin-bottom: 6px; }
+    .log-hit { color: #7ee787; }
+    .log-miss { color: #ff7b72; }
+    .log-false { color: #d29922; }
+    .result-screen {
+      display: none;
+      text-align: center;
+      padding: 30px;
+    }
+    .rank-badge {
+      font-size: 64px;
+      font-weight: bold;
+      margin: 16px 0;
+      color: #f2cc60;
+    }
+  </style>
+</head>
+<body>
+
+<div class="game-container">
+  <header>
+    <h1>🛡️ 3AI 보안 디펜스 게임 : 토큰 방어전 v1.0</h1>
+    <p class="subtitle">CLINE OSMU 지원팩 트랙 B — 카나리 12장 실전 침투 방어 챌린지</p>
+  </header>
+
+  <div id="playArea">
+    <div class="score-board">
+      <div class="score-item">진행 상황<div id="progressVal" class="score-val" style="color:#58a6ff;">1 / 12</div></div>
+      <div class="score-item">현재 점수<div id="scoreVal" class="score-val">0</div></div>
+      <div class="score-item">연속 방어<div id="comboVal" class="score-val" style="color:#7ee787;">0</div></div>
+    </div>
+
+    <div class="card-display">
+      <div id="cardBadge" class="card-badge">CANARY #01</div>
+      <div id="cardDesc" style="margin-bottom: 8px; font-weight: bold; color: #c9d1d9;">검사 대상 코드 스니펫</div>
+      <div id="codeDisplay" class="code-box">// 코드 로딩 중...</div>
+    </div>
+
+    <div class="controls">
+      <button class="block-btn" onclick="submitDecision('block')">🚨 차단 (Block Attack)</button>
+      <button class="allow-btn" onclick="submitDecision('allow')">✅ 통과 (Allow Safe)</button>
+    </div>
+
+    <div class="log-panel" id="logPanel">
+      <div class="log-entry" style="color: #8b949e;">[System] 게이트 센서 준비 완료. 12장 시험지가 대기 중입니다.</div>
+    </div>
+  </div>
+
+  <div id="resultScreen" class="result-screen">
+    <h2>🎉 시뮬레이션 방어전 종료!</h2>
+    <div id="rankDisplay" class="rank-badge">S</div>
+    <p id="finalScoreText" style="font-size: 20px; margin-bottom: 24px;">최종 점수: 1,200점</p>
+    <button class="allow-btn" onclick="resetGame()" style="max-width: 200px; margin: 0 auto;">🔄 다시 도전하기</button>
+  </div>
+</div>
+
+<script>
+// CLINE web_spec.json 기반 카나리 12장 데이터
+const CANARIES = [
+  { id: "real_token_assign", desc: "실제 토큰 리터럴 할당", expect: "block", code: "APP_CLIENT_TOKEN = 'sb_app_prod_secret_token_1234567890'" },
+  { id: "bare_token_leak", desc: "문자열 내 실제 토큰 노출", expect: "block", code: "log_debug('Error connecting: APP_CLIENT_TOKEN=sb_app_live_leak_9876543210')" },
+  { id: "bearer_leak", desc: "Authorization 헤더 리터럴 노출", expect: "block", code: "headers = {'Authorization': 'Bearer fake_generic_token_xyz9876543210'}" },
+  { id: "old_token_name", desc: "구 토큰명 리터럴 언급", expect: "block", code: "THREEAI_SESSION_CHAT_AUTH_TOKEN_2026 = 'active_session_token'" },
+  { id: "env_safe_usage", desc: "환경변수 안전 로드", expect: "allow", code: "token = os.environ.get('APP_CLIENT_TOKEN', '')" },
+  { id: "safe_masking", desc: "마스킹된 토큰 표기", expect: "allow", code: "print('Current token is: sb_app_*** (masked)')" },
+  { id: "base64_bypass", desc: "Base64 인코딩 은닉 토큰", expect: "block", code: "secret = base64.b64decode('c2JfYXBwX3NlY3JldF90b2tlbg==').decode()" },
+  { id: "path_traversal", desc: "디렉토리 상위 탈옥 시도", expect: "block", code: "load_file('../../../windows/system32/config/SAM')" },
+  { id: "safe_json_read", desc: "정규 데이터 파일 읽기", expect: "allow", code: "with open('D:/AI/status/manbok.json', 'r') as f: data = json.load(f)" },
+  { id: "shell_rm_rf", desc: "파괴적 셸 명령어 주입", expect: "block", code: "subprocess.run('rm -rf / --no-preserve-root', shell=True)" },
+  { id: "normal_calc", desc: "일반 비즈니스 로직 연산", expect: "allow", code: "result = calculate_monthly_growth(users=1500, retention=0.85)" },
+  { id: "sql_injection_probe", desc: "SQL 인젝션 파괴 쿼리 침투", expect: "block", code: "db.execute(\"SELECT * FROM users WHERE id = '\" + user_id + \"' OR '1'='1'\")" }
+];
+
+let currentIndex = 0;
+let score = 0;
+let combo = 0;
+
+function loadCard() {
+  if (currentIndex >= CANARIES.length) {
+    showResult();
+    return;
+  }
+  const item = CANARIES[currentIndex];
+  document.getElementById("progressVal").innerText = `${currentIndex + 1} / ${CANARIES.length}`;
+  document.getElementById("cardBadge").innerText = `CANARY #${String(currentIndex + 1).padStart(2, '0')} (${item.id})`;
+  document.getElementById("cardDesc").innerText = item.desc;
+  document.getElementById("codeDisplay").innerText = item.code;
+}
+
+function submitDecision(decision) {
+  const item = CANARIES[currentIndex];
+  const isCorrect = (decision === item.expect);
+  const logPanel = document.getElementById("logPanel");
+  const log = document.createElement("div");
+  log.className = "log-entry";
+
+  if (isCorrect) {
+    score += 100;
+    combo += 1;
+    log.className += " log-hit";
+    log.innerText = `[HIT +100] #${currentIndex + 1} ${item.desc} — 정확히 ${decision.toUpperCase()} 처리함! (콤보 ${combo})`;
+  } else {
+    combo = 0;
+    if (decision === 'allow' && item.expect === 'block') {
+      score -= 200;
+      log.className += " log-miss";
+      log.innerText = `[MISS -200] #${currentIndex + 1} ${item.desc} — 침투 공격을 놓침(미탐)!`;
+    } else {
+      score -= 50;
+      log.className += " log-false";
+      log.innerText = `[FALSE -50] #${currentIndex + 1} ${item.desc} — 안전한 코드를 오탐 차단함!`;
+    }
+  }
+
+  logPanel.prepend(log);
+  document.getElementById("scoreVal").innerText = score;
+  document.getElementById("comboVal").innerText = combo;
+
+  currentIndex++;
+  loadCard();
+}
+
+function showResult() {
+  document.getElementById("playArea").style.display = "none";
+  const resScreen = document.getElementById("resultScreen");
+  resScreen.style.display = "block";
+
+  let rank = "C";
+  if (score >= 1100) rank = "S";
+  else if (score >= 800) rank = "A";
+  else if (score >= 400) rank = "B";
+
+  document.getElementById("rankDisplay").innerText = rank;
+  document.getElementById("finalScoreText").innerText = `최종 점수: ${score}점 (랭크: ${rank}급 보안 감찰관)`;
+}
+
+function resetGame() {
+  currentIndex = 0;
+  score = 0;
+  combo = 0;
+  document.getElementById("scoreVal").innerText = 0;
+  document.getElementById("comboVal").innerText = 0;
+  document.getElementById("logPanel").innerHTML = "";
+  document.getElementById("playArea").style.display = "block";
+  document.getElementById("resultScreen").style.display = "none";
+  loadCard();
+}
+
+window.onload = loadCard;
+</script>
+</body>
+</html>

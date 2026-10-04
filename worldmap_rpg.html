@@ -227,6 +227,13 @@
             pointer-events: none;
         }
         .info-card.active { transform: translateX(0); opacity: 1; pointer-events: auto; }
+        @media (max-width: 768px) {
+            .info-card {
+                top: 70px; right: 10px; width: calc(100vw - 20px);
+                max-height: calc(100vh - 130px);
+                padding: 16px;
+            }
+        }
         .close-btn { position: absolute; top: 12px; right: 14px; background: none; border: none; color: var(--text-sub); font-size: 22px; cursor: pointer; }
         .close-btn:hover { color: var(--gold); }
 

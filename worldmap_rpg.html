@@ -3,20 +3,22 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>3AI ROOT REALM — 실시간 관제 RPG 월드맵</title>
+    <title>3AI ROOT REALM — 관제 RPG v0.4 통합본</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;800;900&family=Noto+Serif+KR:wght@400;600;700&display=swap" rel="stylesheet">
     <style>
         :root {
-            --bg-ocean: #09131f;
+            --bg-ocean: #070d1a;
             --ocean-grid: rgba(28, 54, 84, 0.25);
             --parchment-border: #8b6b3e;
             --gold: #f5c542;
             --gold-glow: rgba(245, 197, 66, 0.4);
-            --card-bg: rgba(13, 22, 35, 0.94);
+            --card-bg: rgba(13, 22, 35, 0.95);
             --text-main: #e6dfcf;
             --text-sub: #9ca3af;
+            --green: #35d07f;
+            --pink: #ff5aa2;
         }
 
         * { box-sizing: border-box; margin: 0; padding: 0; user-select: none; -webkit-user-select: none; }
@@ -97,7 +99,7 @@
         }
 
         .node-tag {
-            margin-top: 10px; background: rgba(10, 16, 26, 0.9);
+            margin-top: 10px; background: rgba(10, 16, 26, 0.92);
             border: 1px solid var(--parchment-border); border-radius: 6px;
             padding: 4px 10px; font-size: 13px; font-weight: 600; color: #f3ece0;
             white-space: nowrap; box-shadow: 0 4px 12px rgba(0,0,0,0.5);
@@ -164,7 +166,7 @@
             50% { box-shadow: 0 0 30px rgba(168, 85, 247, 0.85); }
         }
 
-        /* 상단 네비게이션 헤더 */
+        /* HUD 상단 헤더 */
         .hud-header {
             position: absolute; top: 16px; left: 16px; right: 16px;
             display: flex; justify-content: space-between; align-items: flex-start;
@@ -187,7 +189,7 @@
             background: var(--card-bg); border: 2px solid var(--parchment-border);
             border-radius: 12px; padding: 8px 14px; display: flex; gap: 8px;
             box-shadow: 0 10px 30px rgba(0,0,0,0.7); backdrop-filter: blur(8px);
-            align-items: center;
+            align-items: center; flex-wrap: wrap;
         }
         .tracker-label { font-size: 11px; color: var(--gold); font-weight: bold; margin-right: 4px; }
         .agent-btn {
@@ -199,6 +201,19 @@
             background: #1e3a5f; border-color: var(--gold); transform: translateY(-2px);
             box-shadow: 0 4px 12px var(--gold-glow);
         }
+
+        /* 퀘스트 & 도감 바 (클라인 v0.3 엔진 합체) */
+        .quest-hud-bar {
+            position: absolute; bottom: 20px; left: 20px;
+            background: var(--card-bg); border: 2px solid var(--parchment-border);
+            border-radius: 12px; padding: 12px 18px; z-index: 90;
+            display: flex; gap: 16px; align-items: center;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.7); font-size: 13px;
+        }
+        .quest-tag { display: flex; align-items: center; gap: 6px; }
+        .q-check { font-weight: bold; }
+        .q-done { color: var(--green); }
+        .q-todo { color: var(--pink); }
 
         /* 우측 RPG 정보 모달 */
         .info-card {
@@ -249,6 +264,19 @@
             background: radial-gradient(circle, rgba(168, 85, 247, 0.15) 0%, rgba(9, 19, 31, 0.7) 70%);
             border-radius: 50%; pointer-events: none; filter: blur(25px);
         }
+
+        /* 엔딩 모달 다이얼로그 (Vol.2 연계) */
+        #ending-modal {
+            position: absolute; inset: 0; background: rgba(5, 11, 22, 0.88);
+            display: none; align-items: center; justify-content: center; z-index: 200;
+        }
+        .ending-box {
+            background: var(--card-bg); border: 2px solid var(--gold); border-radius: 16px;
+            padding: 30px; max-width: 500px; text-align: center;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.9), 0 0 30px var(--gold-glow);
+        }
+        .ending-box h2 { color: var(--gold); font-family: 'Cinzel', serif; font-size: 24px; margin-bottom: 12px; }
+        .ending-box p { font-size: 14px; line-height: 1.8; color: #e2e8f0; margin-bottom: 20px; }
     </style>
 </head>
 <body>
@@ -341,27 +369,23 @@
             </div>
 
             <!-- ================= 실시간 에이전트 캐릭터 아바타 레이어 ================= -->
-            <!-- 안티 아바타 -->
             <div id="avatar-anti" class="agent-avatar" style="top: 830px; left: 900px;" onclick="focusAgent('anti')">
-                <div class="agent-bubble">🚀 안티: 12:00 쓰레드 뽀개기 1호 카드 조판 중!</div>
+                <div id="bubble-anti" class="agent-bubble">🚀 안티: 12:00 쓰레드 뽀개기 1호 카드 조판 완료!</div>
                 <div class="agent-sprite" style="border-color: #38bdf8;">🚀</div>
             </div>
 
-            <!-- 만복 아바타 -->
             <div id="avatar-manbok" class="agent-avatar" style="top: 750px; left: 1200px;" onclick="focusAgent('manbok')">
-                <div class="agent-bubble">👑 만복: 11:00 토큰 리셋 & 승인 게이트 대기 중</div>
+                <div id="bubble-manbok" class="agent-bubble">👑 만복: 쿨쿨… (Zzz 11시 전에는 승인 도장 못 찍는다)</div>
                 <div class="agent-sprite" style="border-color: #fbbf24;">👑</div>
             </div>
 
-            <!-- 코니 아바타 -->
             <div id="avatar-kony" class="agent-avatar" style="top: 1050px; left: 1420px;" onclick="focusAgent('kony')">
-                <div class="agent-bubble">🔍 코니: 오늘 18:00 일요일 본편 D-1 검증 대기</div>
+                <div id="bubble-kony" class="agent-bubble">🔍 코니: 오늘 18:00 일요일 본편 D-1 검증 대기</div>
                 <div class="agent-sprite" style="border-color: #ec4899;">🔍</div>
             </div>
 
-            <!-- 클라인 아바타 -->
             <div id="avatar-cline" class="agent-avatar" style="top: 550px; left: 980px;" onclick="focusAgent('cline')">
-                <div class="agent-bubble">🕵️ 클라인: 미니 RPG game.html 납품 완료 & 대륙 측량</div>
+                <div id="bubble-cline" class="agent-bubble">🕵️ 클라인: v0.4 킬러기능(시간개방+도감) 병합 완료!</div>
                 <div class="agent-sprite" style="border-color: #06b6d4;">🕵️</div>
             </div>
 
@@ -372,20 +396,31 @@
     <div class="hud-header">
         <div class="title-plate">
             <h1>THE 3AI ROOT REALM</h1>
-            <p>실시간 AI 에이전트 업무 연동 관제 RPG v1.1</p>
+            <p>실시간 AI 에이전트 업무 연동 관제 RPG v0.4 통합본</p>
         </div>
 
         <div class="tracker-bar">
             <span class="tracker-label">🎯 실시간 추적:</span>
-            <button class="agent-btn" onclick="focusAgent('anti')"><span>🚀</span> 안티 추적</button>
-            <button class="agent-btn" onclick="focusAgent('manbok')"><span>👑</span> 만복 추적</button>
-            <button class="agent-btn" onclick="focusAgent('kony')"><span>🔍</span> 코니 추적</button>
-            <button class="agent-btn" onclick="focusAgent('cline')"><span>🕵️</span> 클라인 추적</button>
+            <button class="agent-btn" onclick="focusAgent('anti')"><span>🚀</span> 안티</button>
+            <button class="agent-btn" onclick="focusAgent('manbok')"><span>👑</span> 만복</button>
+            <button class="agent-btn" onclick="focusAgent('kony')"><span>🔍</span> 코니</button>
+            <button class="agent-btn" onclick="focusAgent('cline')"><span>🕵️</span> 클라인</button>
+            <button class="agent-btn" style="background:#2e1065; border-color:#a855f7;" onclick="toggleBGM()"><span>🎵</span> BGM</button>
             <button class="agent-btn" style="background:#1e293b; border-color:#8b6b3e;" onclick="resetView()">🧭 전체 지도</button>
         </div>
     </div>
 
-    <!-- 우측 RPG 퀘스트/영토 정보 패널 -->
+    <!-- 하단 퀘스트 & 도감 바 (클라인 v0.3 엔진 합체) -->
+    <div class="quest-hud-bar">
+        <span style="color:var(--gold); font-weight:bold;">📜 탐험 퀘스트:</span>
+        <div class="quest-tag"><span id="q1-icon" class="q-check q-todo">○</span> Q1.지원팩 확인</div>
+        <div class="quest-tag"><span id="q2-icon" class="q-check q-todo">○</span> Q2.D-1 간판 확인</div>
+        <div class="quest-tag"><span id="q3-icon" class="q-check q-todo">○</span> Q3.Agent-Reach 망루 관측</div>
+        <div class="quest-tag"><span id="q4-icon" class="q-check q-todo">○</span> Q4.11시 만복 깨우기</div>
+        <span style="color:var(--text-sub); margin-left:8px;">| 명성: <b id="fame-score" style="color:var(--gold)">0</b>pt</span>
+    </div>
+
+    <!-- 우측 RPG 정보 모달 -->
     <div id="info-card" class="info-card">
         <button class="close-btn" onclick="closeCard()">&times;</button>
         <div id="card-type" class="card-realm-type">대륙 관할령</div>
@@ -418,6 +453,19 @@
         </div>
     </div>
 
+    <!-- Vol.2 엔딩 모달 다이얼로그 -->
+    <div id="ending-modal">
+        <div class="ending-box">
+            <h2>🏆 대륙 탐험 대성공!</h2>
+            <p>
+                축하합니다! 3AI 대륙의 4대 퀘스트를 모두 완수했습니다!<br><br>
+                감찰관 영지의 지원팩부터, 11시 만복 감사관의 승인 도장까지 모두 확보되었습니다.<br>
+                오늘의 모험 기록은 오늘 밤 <b>20:00 『The 3AI Daily Observer Vol.02』</b>로 이어집니다!
+            </p>
+            <button class="agent-btn" style="margin:0 auto; padding:10px 24px; font-size:14px;" onclick="closeEnding()">영광을 안고 계속 탐험하기</button>
+        </div>
+    </div>
+
     <!-- 줌 컨트롤 -->
     <div class="zoom-controls">
         <button class="zoom-btn" onclick="zoomMap(1.2)">+</button>
@@ -425,6 +473,11 @@
     </div>
 
     <script>
+        // 클라인 3대 킬러기능 병합 엔진
+        let quests = { q1: false, q2: false, q3: false, q4: false };
+        let fame = 0;
+        let visitedLands = new Set();
+
         const REALM_DATA = {
             capital: {
                 type: "수도 요새 (Imperial Capital)",
@@ -453,8 +506,8 @@
                 guardian: "🔍 코니 (Devil / Auditor)",
                 status: "정규 항해 중",
                 level: "Lv.85 (영상 등대)",
-                desc: "매일 07:00 모닝 브리핑 쇼츠와 화·목 18:00 정규 쇼츠, 일요일 본편을 렌더링하고 전파하는 거대 기지입니다.",
-                quest: "오늘 18:00 일요일 본편 롱폼 영상 안정적 출항"
+                desc: "매일 07:00 모닝 브리핑 쇼츠와 화·목 18:00 정규 쇼츠, 일요일 본편을 렌더링하고 전파하는 거대 기지입니다. 오늘자 주간 브리핑(PfNpKpBtnlA) 출항 완료!",
+                quest: "Q2 완료: 영상 제도 D-1 간판 조사 완료 (오늘 18:00 본편 대기)"
             },
             pobbagi: {
                 type: "지식 경작 평원 (Plains)",
@@ -481,10 +534,10 @@
                 title: "감찰관 영지 (cline)",
                 files: "532 파일",
                 guardian: "🕵️ 외주 감찰관 CLINE",
-                status: "미니 RPG 납품 완료",
+                status: "v0.4 병합본 공조",
                 level: "Lv.80 (망원탑)",
                 desc: "3AI 영역 바깥에서 객관적 시선으로 시스템을 스캔하고 보안 카나리 시험, 라디오 드라마, 미니 RPG를 납품하는 영지입니다.",
-                quest: "오늘 20:00 데일리 관찰일지 및 변경분 정기 입고"
+                quest: "Q1 완료: 감찰관 영지 남쪽 상자(지원팩 8파일) 배달 확인"
             },
             skills: {
                 type: "공중 부유 군도 (Floating Isles)",
@@ -534,7 +587,7 @@
                 status: "안개(Fog) 속 발견",
                 level: "Lv.??? (황금 대륙)",
                 desc: "전 세계를 뒤흔든 글로벌 SNS 리서치 신대륙! 트위터, 레딧, 샤오홍슈의 트렌드를 읽기 전용 가드로 수집하는 강력한 미래 영토입니다.",
-                quest: "11:00 만복 PM 승인 후 .agents/skills 항로 개척 착수"
+                quest: "Q3 완료: 서쪽 신대륙 망루에서 Agent-Reach 실측 관측 완료!"
             },
             osmu: {
                 type: "연결 군도 (Bridge Isles)",
@@ -575,18 +628,15 @@
             closeCard();
         }
 
-        // 실시간 에이전트 카메라 자동 추적 (Auto-Focus)
         function focusAgent(agentKey) {
             const ag = AGENTS[agentKey];
             if (!ag) return;
 
             scale = window.innerWidth < 768 ? 0.7 : ag.zoom;
-            // 타겟 좌표가 화면 정중앙에 오도록 계산
             posX = (window.innerWidth / 2) - (ag.x * scale);
             posY = (window.innerHeight / 2) - (ag.y * scale);
             updateTransform();
 
-            // 해당 영토 퀘스트 카드 오픈
             selectRealm(ag.realmId);
         }
 
@@ -629,9 +679,42 @@
             updateTransform();
         }
 
+        // Q4 11시 만복 깨우기 시간 개방 검사 로직
+        function checkManbokStatus() {
+            const now = new Date();
+            const hour = now.getHours();
+            const isAwake = hour >= 11;
+
+            const manbokBubble = document.getElementById('bubble-manbok');
+            if (isAwake) {
+                manbokBubble.innerText = "👑 만복: 기상 완료! 승인 게이트 가동 중 (도장 쾅!)";
+                if (!quests.q4) {
+                    quests.q4 = true;
+                    fame += 100;
+                    updateQuestsUI();
+                }
+            } else {
+                manbokBubble.innerText = "👑 만복: 쿨쿨… (Zzz 11시 전에는 승인 도장 못 찍는다)";
+            }
+            return isAwake;
+        }
+
         function selectRealm(id) {
             const data = REALM_DATA[id];
             if (!data) return;
+
+            visitedLands.add(id);
+
+            // 퀘스트 체크 연동
+            if (id === 'cline' && !quests.q1) { quests.q1 = true; fame += 50; }
+            if (id === 'youtube' && !quests.q2) { quests.q2 = true; fame += 50; }
+            if (id === 'agent_reach' && !quests.q3) { quests.q3 = true; fame += 80; }
+            if (id === 'capital') {
+                const awake = checkManbokStatus();
+                if (awake && !quests.q4) { quests.q4 = true; fame += 100; }
+            }
+
+            updateQuestsUI();
 
             document.getElementById('card-type').innerText = data.type;
             document.getElementById('card-title').innerText = data.title;
@@ -645,11 +728,74 @@
 
             const card = document.getElementById('info-card');
             card.classList.add('active');
+
+            // 4퀘스트 올 클리어 시 Vol.2 엔딩 모달 발동!
+            if (quests.q1 && quests.q2 && quests.q3 && quests.q4) {
+                setTimeout(() => {
+                    document.getElementById('ending-modal').style.display = 'flex';
+                }, 800);
+            }
+        }
+
+        function updateQuestsUI() {
+            document.getElementById('fame-score').innerText = fame;
+            const qList = ['q1', 'q2', 'q3', 'q4'];
+            qList.forEach(q => {
+                const el = document.getElementById(`${q}-icon`);
+                if (quests[q]) {
+                    el.innerText = '● 완료';
+                    el.className = 'q-check q-done';
+                } else {
+                    el.innerText = '○ 미완';
+                    el.className = 'q-check q-todo';
+                }
+            });
         }
 
         function closeCard() {
             document.getElementById('info-card').classList.remove('active');
         }
+
+        function closeEnding() {
+            document.getElementById('ending-modal').style.display = 'none';
+        }
+
+        // Web Audio 칩튠 레트로 BGM 합성기 (클라인 사운드 엔진)
+        let audioCtx = null;
+        let isBgmPlaying = false;
+        let bgmTimer = null;
+
+        function toggleBGM() {
+            if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            if (isBgmPlaying) {
+                clearInterval(bgmTimer);
+                isBgmPlaying = false;
+                alert("🔇 BGM 정지");
+            } else {
+                isBgmPlaying = true;
+                const notes = [261.63, 293.66, 329.63, 392.00, 440.00, 523.25];
+                let idx = 0;
+                bgmTimer = setInterval(() => {
+                    if (!isBgmPlaying) return;
+                    const osc = audioCtx.createOscillator();
+                    const gain = audioCtx.createGain();
+                    osc.type = "triangle";
+                    osc.frequency.setValueAtTime(notes[idx % notes.length], audioCtx.currentTime);
+                    gain.gain.setValueAtTime(0.08, audioCtx.currentTime);
+                    gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.3);
+                    osc.connect(gain);
+                    gain.connect(audioCtx.destination);
+                    osc.start();
+                    osc.stop(audioCtx.currentTime + 0.3);
+                    idx = (idx + 1) % notes.length;
+                }, 280);
+                alert("🎵 레트로 8비트 BGM 재생 시작!");
+            }
+        }
+
+        // 1초마다 만복 시간 체크 실행
+        setInterval(checkManbokStatus, 5000);
+        checkManbokStatus();
     </script>
 </body>
 </html>

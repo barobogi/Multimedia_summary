@@ -797,5 +797,159 @@
         setInterval(checkManbokStatus, 5000);
         checkManbokStatus();
     </script>
+
+<script>
+/* ===== v0.4.1 cline 패치 (안티 원본 무수정 · 이 스크립트 블록만 body 끝에 붙이면 동작) =====
+   1) localStorage 자동저장/복원 + 진행 초기화   2) 모바일 터치 팬/핀치
+   3) BGM alert() → 논블로킹 토스트              4) 만복 11시 카운트다운        */
+(function () {
+  var KEY = "3ai_worldmap_v041";
+  var H = 11; // 만복 기상 시각
+
+  /* ---------- 토스트 ---------- */
+  var tEl = null;
+  function toast(m) {
+    try {
+      if (!tEl) {
+        tEl = document.createElement("div");
+        tEl.id = "cline-toast";
+        tEl.style.cssText =
+          "position:fixed;left:50%;top:18px;transform:translateX(-50%);z-index:99999;" +
+          "background:#0c1526f2;border:1px solid #ffbf00;color:#ffbf00;border-radius:999px;" +
+          "padding:8px 18px;font:14px 'Malgun Gothic',sans-serif;pointer-events:none;" +
+          "opacity:0;transition:opacity .25s";
+        document.body.appendChild(tEl);
+      }
+      tEl.textContent = m;
+      tEl.style.opacity = "1";
+      clearTimeout(tEl._t);
+      tEl._t = setTimeout(function () { tEl.style.opacity = "0"; }, 2200);
+    } catch (e) {}
+  }
+
+  /* ---------- 1) 자동저장 / 복원 ---------- */
+  function saveState() {
+    try {
+      localStorage.setItem(KEY, JSON.stringify({
+        quests: quests, fame: fame, lands: Array.from(visitedLands),
+        view: { scale: scale, posX: posX, posY: posY }, at: Date.now()
+      }));
+    } catch (e) {}
+  }
+  function loadState() {
+    var raw = null;
+    try { raw = localStorage.getItem(KEY); } catch (e) { return false; }
+    if (!raw) return false;
+    try {
+      var s = JSON.parse(raw);
+      quests = s.quests || quests;
+      fame = typeof s.fame === "number" ? s.fame : fame;
+      if (s.lands) visitedLands = new Set(s.lands);
+      if (s.view && typeof s.view.scale === "number") {
+        scale = s.view.scale; posX = s.view.posX; posY = s.view.posY;
+      }
+      return true;
+    } catch (e) { return false; }
+  }
+
+  /* 원본 함수 래핑(저장 훅) — updateTransform은 드래그마다 호출되므로 제외 */
+  var _uq = updateQuestsUI, _sr = selectRealm;
+  updateQuestsUI = function () { _uq(); saveState(); };
+  selectRealm = function (id) { _sr(id); saveState(); };
+
+  /* ---------- 2) 모바일 터치 팬/핀치 ---------- */
+  var vp = document.getElementById("map-viewport");
+  if (vp) {
+    vp.style.touchAction = "none";
+    var d0 = 0, s0 = 1;
+    vp.addEventListener("touchstart", function (e) {
+      if (e.touches.length === 1) {
+        isDragging = true;
+        startX = e.touches[0].clientX - posX;
+        startY = e.touches[0].clientY - posY;
+      } else if (e.touches.length === 2) {
+        isDragging = false;
+        var dx = e.touches[0].clientX - e.touches[1].clientX;
+        var dy = e.touches[0].clientY - e.touches[1].clientY;
+        d0 = Math.sqrt(dx * dx + dy * dy);
+        s0 = scale;
+      }
+    }, { passive: false });
+    vp.addEventListener("touchmove", function (e) {
+      e.preventDefault();
+      if (e.touches.length === 1 && isDragging) {
+        posX = e.touches[0].clientX - startX;
+        posY = e.touches[0].clientY - startY;
+        updateTransform();
+      } else if (e.touches.length === 2 && d0 > 0) {
+        var dx = e.touches[0].clientX - e.touches[1].clientX;
+        var dy = e.touches[0].clientY - e.touches[1].clientY;
+        var d = Math.sqrt(dx * dx + dy * dy);
+        scale = Math.min(Math.max(s0 * d / d0, 0.35), 1.6);
+        updateTransform();
+      }
+    }, { passive: false });
+    vp.addEventListener("touchend", function () { isDragging = false; });
+  }
+
+  /* ---------- 3) BGM alert() → 토스트 ---------- */
+  var _bgm = toggleBGM;
+  toggleBGM = function () {
+    var real = window.alert;
+    window.alert = function (m) { toast(m); };
+    try { _bgm(); } finally { window.alert = real; }
+  };
+
+  /* ---------- 4) 만복 11시 카운트다운 ---------- */
+  function pad(n) { return n < 10 ? "0" + n : "" + n; }
+  function countdown() {
+    var b = document.getElementById("bubble-manbok");
+    if (!b) return;
+    var now = new Date();
+    if (now.getHours() >= H) return;
+    var rest = (H * 60) - (now.getHours() * 60 + now.getMinutes());
+    if (rest < 0) rest = 0;
+    b.innerText = "👑 만복: 쿨쿨… (Zzz 11시까지 " +
+      Math.floor(rest / 60) + "시간 " + pad(rest % 60) + "분)";
+  }
+  var _cmb = checkManbokStatus;
+  checkManbokStatus = function () { var r = _cmb(); countdown(); return r; };
+  setInterval(countdown, 700);
+
+  /* ---------- 5) 진행 초기화 버튼 ---------- */
+  function installReset() {
+    if (document.getElementById("cline-reset")) return;
+    var b = document.createElement("button");
+    b.id = "cline-reset";
+    b.textContent = "\uD83D\uDD04 진행 초기화";
+    b.style.cssText = "position:fixed;right:14px;bottom:14px;z-index:99999;" +
+      "background:#1a2f52;color:#e8eef4;border:1px solid #5aa2ff;border-radius:8px;" +
+      "padding:8px 14px;font:13px 'Malgun Gothic',sans-serif;cursor:pointer";
+    b.onclick = function () {
+      try { localStorage.removeItem(KEY); } catch (e) {}
+      quests = { q1: false, q2: false, q3: false, q4: false };
+      fame = 0;
+      visitedLands = new Set();
+      updateQuestsUI();
+      closeEnding();
+      toast("진행 초기화 완료");
+    };
+    document.body.appendChild(b);
+  }
+
+  /* ---------- 부팅 ---------- */
+  var restored = loadState();
+  try { updateQuestsUI(); updateTransform(); } catch (e) {}
+  installReset();
+  countdown();
+  window.addEventListener("beforeunload", saveState);
+  toast(restored ? "이전 진행을 복원했습니다 (자동저장)"
+                 : "자동저장 시작 — 새로고침해도 진행이 유지됩니다");
+
+  /* 테스트/검증용 노출 */
+  window.__clineV041 = { saveState: saveState, loadState: loadState,
+    toast: toast, countdown: countdown, KEY: KEY };
+})();
+</script>
 </body>
 </html>

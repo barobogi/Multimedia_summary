@@ -851,9 +851,9 @@
         resetView();
         window.addEventListener('resize', resetView);
         renderScheduleDashboard('all');
-        const initHash = window.location.hash.replace('#', '');
+        const initHash = window.location.hash.replace('#', '') || 'pobbagi';
         if (initHash && typeof REALM_DATA !== 'undefined' && REALM_DATA[initHash]) {
-            setTimeout(() => selectRealm(initHash), 150);
+            selectRealm(initHash);
         }
 
         viewport.addEventListener('mousedown', (e) => {

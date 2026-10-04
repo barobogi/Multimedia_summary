@@ -558,7 +558,7 @@
         <div class="quest-tag"><span id="q1-icon" class="q-check q-todo">○</span> Q1.지원팩 확인</div>
         <div class="quest-tag"><span id="q2-icon" class="q-check q-todo">○</span> Q2.D-1 간판 확인</div>
         <div class="quest-tag"><span id="q3-icon" class="q-check q-todo">○</span> Q3.Agent-Reach 망루 관측</div>
-        <div class="quest-tag"><span id="q4-icon" class="q-check q-todo">○</span> Q4.11시 만복 깨우기</div>
+        <div class="quest-tag"><span id="q4-icon" class="q-check q-done">●</span> Q4. 만복 총괄 지휘 (상시 가동)</div>
         <span style="color:var(--text-sub); margin-left:8px;">| 명성: <b id="fame-score" style="color:var(--gold)">0</b>pt</span>
     </div>
 
@@ -896,20 +896,15 @@
 
         // Q4 11시 만복 깨우기 시간 개방 검사 로직
         function checkManbokStatus() {
-            const now = new Date();
-            const hour = now.getHours();
-            const isAwake = hour >= 11;
-
+            const isAwake = true;
             const manbokBubble = document.getElementById('bubble-manbok');
-            if (isAwake) {
-                manbokBubble.innerText = "👑 만복: 기상 완료! 승인 게이트 가동 중 (도장 쾅!)";
-                if (!quests.q4) {
-                    quests.q4 = true;
-                    fame += 100;
-                    updateQuestsUI();
-                }
-            } else {
-                manbokBubble.innerText = "👑 만복: 쿨쿨… (Zzz 11시 전에는 승인 도장 못 찍는다)";
+            if (manbokBubble) {
+                manbokBubble.innerText = "👑 만복: 총괄 감사 및 승인 게이트 정상 가동 중 (도장 쾅!)";
+            }
+            if (!quests.q4) {
+                quests.q4 = true;
+                fame += 100;
+                updateQuestsUI();
             }
             return isAwake;
         }
@@ -1554,21 +1549,12 @@
     try { _bgm(); } finally { window.alert = real; }
   };
 
-  /* ---------- 4) 만복 11시 카운트다운 ---------- */
-  function pad(n) { return n < 10 ? "0" + n : "" + n; }
-  function countdown() {
+  /* ---------- 4) 만복 상시 가동 상태 고정 (11시 카운트다운 해제) ---------- */
+  function setManbokActive() {
     var b = document.getElementById("bubble-manbok");
-    if (!b) return;
-    var now = new Date();
-    if (now.getHours() >= H) return;
-    var rest = (H * 60) - (now.getHours() * 60 + now.getMinutes());
-    if (rest < 0) rest = 0;
-    b.innerText = "👑 만복: 쿨쿨… (Zzz 11시까지 " +
-      Math.floor(rest / 60) + "시간 " + pad(rest % 60) + "분)";
+    if (b) b.innerText = "👑 만복: 총괄 감사 및 승인 게이트 정상 가동 중 (도장 쾅!)";
   }
-  var _cmb = checkManbokStatus;
-  checkManbokStatus = function () { var r = _cmb(); countdown(); return r; };
-  setInterval(countdown, 700);
+  setInterval(setManbokActive, 3000);
 
   /* ---------- 5) 진행 초기화 버튼 ---------- */
   function installReset() {

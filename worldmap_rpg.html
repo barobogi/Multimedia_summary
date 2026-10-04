@@ -217,7 +217,7 @@
 
         /* 우측 RPG 정보 모달 */
         .info-card {
-            position: absolute; top: 90px; right: 20px; width: 360px;
+            position: absolute; top: 80px; right: 20px; width: 380px; max-height: calc(100vh - 100px); overflow-y: auto;
             max-width: calc(100vw - 40px); background: var(--card-bg);
             border: 2px solid var(--parchment-border); border-radius: 14px;
             padding: 22px; box-shadow: 0 16px 40px rgba(0,0,0,0.8);
@@ -247,6 +247,140 @@
             padding: 8px 12px; border-radius: 0 6px 6px 0; font-size: 11px;
         }
         .card-quest-box strong { color: var(--gold); display: block; margin-bottom: 2px; }
+
+        /* 3AI 하루 일정 & 미결 업무 실시간 대시보드 스타일 */
+        .dash-schedule-container {
+            margin-top: 14px;
+            border-top: 1px solid rgba(139, 107, 62, 0.4);
+            padding-top: 12px;
+        }
+        .dash-schedule-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+        .dash-title {
+            font-size: 12px;
+            font-weight: 700;
+            color: var(--gold);
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        .dash-pending-badge {
+            background: rgba(239, 68, 68, 0.2);
+            color: #f87171;
+            border: 1px solid rgba(239, 68, 68, 0.4);
+            border-radius: 9999px;
+            font-size: 10px;
+            padding: 2px 7px;
+            font-weight: 600;
+        }
+        .dash-tabs {
+            display: flex;
+            gap: 4px;
+            margin-bottom: 8px;
+            overflow-x: auto;
+            padding-bottom: 2px;
+        }
+        .dash-tabs::-webkit-scrollbar { height: 3px; }
+        .dash-tabs::-webkit-scrollbar-thumb { background: rgba(139, 107, 62, 0.4); border-radius: 2px; }
+        .dash-tab-btn {
+            background: rgba(30, 41, 59, 0.7);
+            border: 1px solid rgba(139, 107, 62, 0.4);
+            color: var(--text-sub);
+            padding: 3px 8px;
+            border-radius: 6px;
+            font-size: 10px;
+            cursor: pointer;
+            white-space: nowrap;
+            transition: all 0.2s;
+            font-family: inherit;
+        }
+        .dash-tab-btn:hover { color: #fff; border-color: var(--gold); }
+        .dash-tab-btn.active {
+            background: rgba(245, 197, 66, 0.2);
+            color: var(--gold);
+            border-color: var(--gold);
+            font-weight: 700;
+        }
+        .dash-schedule-list {
+            max-height: 200px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            font-size: 11px;
+            padding-right: 2px;
+        }
+        .dash-schedule-list::-webkit-scrollbar { width: 4px; }
+        .dash-schedule-list::-webkit-scrollbar-thumb { background: rgba(139, 107, 62, 0.4); border-radius: 3px; }
+        .task-card {
+            background: rgba(15, 23, 42, 0.75);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 7px;
+            padding: 6px 9px;
+            display: flex;
+            flex-direction: column;
+            gap: 3px;
+            transition: border-color 0.2s;
+        }
+        .task-card:hover { border-color: rgba(245, 197, 66, 0.35); }
+        .task-card.active-working {
+            border-color: rgba(56, 189, 248, 0.5);
+            background: rgba(56, 189, 248, 0.08);
+        }
+        .task-card.pending {
+            border-color: rgba(245, 197, 66, 0.35);
+            background: rgba(245, 197, 66, 0.05);
+        }
+        .task-card.done {
+            border-color: rgba(16, 185, 129, 0.3);
+            opacity: 0.75;
+        }
+        .task-meta {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .task-time { font-family: monospace; font-size: 10px; color: var(--gold); font-weight: 600; }
+        .task-agent { font-size: 10px; color: var(--text-sub); display: flex; align-items: center; gap: 3px; }
+        .task-badge {
+            font-size: 9px;
+            padding: 1px 5px;
+            border-radius: 4px;
+            font-weight: 600;
+        }
+        .badge-done { background: rgba(16, 185, 129, 0.2); color: #34d399; }
+        .badge-doing { background: rgba(56, 189, 248, 0.25); color: #38bdf8; animation: pulse 1.5s infinite; }
+        .badge-pending { background: rgba(245, 158, 11, 0.2); color: #fbbf24; }
+        .task-title { font-size: 11px; color: #e5e7eb; line-height: 1.35; }
+
+        /* 대형 글로벌 대시보드 모달 */
+        #global-dashboard-modal {
+            position: fixed; inset: 0; background: rgba(5, 10, 20, 0.88);
+            backdrop-filter: blur(8px); z-index: 250;
+            display: none; align-items: center; justify-content: center;
+        }
+        #global-dashboard-modal.active { display: flex; }
+        .global-dash-box {
+            background: var(--card-bg);
+            border: 2px solid var(--gold);
+            border-radius: 16px;
+            width: 760px;
+            max-width: 95vw;
+            max-height: 90vh;
+            overflow-y: auto;
+            padding: 24px;
+            box-shadow: 0 0 40px rgba(245, 197, 66, 0.3);
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+        .global-dash-box::-webkit-scrollbar { width: 6px; }
+        .global-dash-box::-webkit-scrollbar-thumb { background: rgba(139, 107, 62, 0.6); border-radius: 3px; }
+
 
         .zoom-controls {
             position: absolute; bottom: 20px; right: 20px;
@@ -406,6 +540,7 @@
             <button class="agent-btn" onclick="focusAgent('kony')"><span>🔍</span> 코니</button>
             <button class="agent-btn" onclick="focusAgent('cline')"><span>🕵️</span> 클라인</button>
             <button class="agent-btn" style="background:#2e1065; border-color:#a855f7;" onclick="toggleBGM()"><span>🎵</span> BGM</button>
+            <button class="agent-btn" style="background:rgba(245, 197, 66, 0.18); border-color:var(--gold);" onclick="openGlobalScheduleModal()"><span>📊</span> 업무 대시보드</button>
             <button class="agent-btn" style="background:#1e293b; border-color:#8b6b3e;" onclick="resetView()">🧭 전체 지도</button>
         </div>
     </div>
@@ -451,9 +586,82 @@
             <strong id="quest-title">실시간 임무</strong>
             <span id="quest-desc">임무 내용</span>
         </div>
+
+        <!-- 하루 일정 기준 각 AI들 미결 업무 대시보드 (RPG 3AI 시스템 실시간 업무 대시보드화) -->
+        <div class="dash-schedule-container">
+            <div class="dash-schedule-header">
+                <span class="dash-title">📅 오늘 일정 기준 3AI 미결 업무</span>
+                <span id="dash-pending-count" class="dash-pending-badge">미결 16건</span>
+            </div>
+            
+            <!-- AI 필터 탭 -->
+            <div class="dash-tabs">
+                <button class="dash-tab-btn active" data-agent="all" onclick="filterScheduleAgent('all', event)">전체</button>
+                <button class="dash-tab-btn" data-agent="anti" onclick="filterScheduleAgent('anti', event)">🚀 안티</button>
+                <button class="dash-tab-btn" data-agent="manbok" onclick="filterScheduleAgent('manbok', event)">👑 만복</button>
+                <button class="dash-tab-btn" data-agent="kony" onclick="filterScheduleAgent('kony', event)">🔍 코니</button>
+                <button class="dash-tab-btn" data-agent="cline" onclick="filterScheduleAgent('cline', event)">🕵️ 클라인</button>
+            </div>
+
+            <!-- 미결/진행 업무 목록 (동적 렌더링) -->
+            <div id="dash-schedule-list" class="dash-schedule-list">
+            </div>
+        </div>
     </div>
 
-    <!-- Vol.2 엔딩 모달 다이얼로그 -->
+    <!-- 3AI 시스템 실시간 업무 관제 대형 대시보드 모달 -->
+    <div id="global-dashboard-modal">
+        <div class="global-dash-box">
+            <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid rgba(139,107,62,0.4); padding-bottom:12px;">
+                <div>
+                    <h2 style="font-size:18px; color:var(--gold); display:flex; align-items:center; gap:8px;">
+                        <span>🏛️</span> 3AI 시스템 실시간 업무 관제 대시보드
+                    </h2>
+                    <p style="font-size:12px; color:var(--text-sub); margin-top:3px;">
+                        2026-10-04 (일요일) · 오늘 하루 일정 및 4대 AI(안티/만복/코니/클라인) 실시간 업무 현황
+                    </p>
+                </div>
+                <button class="close-btn" style="position:static; font-size:24px;" onclick="closeGlobalScheduleModal()">&times;</button>
+            </div>
+
+            <!-- 진척 요약 바 -->
+            <div style="background:rgba(15,23,42,0.8); border:1px solid rgba(255,255,255,0.1); border-radius:10px; padding:12px 16px; display:flex; justify-content:space-around; align-items:center; text-align:center;">
+                <div>
+                    <div style="font-size:11px; color:var(--text-sub);">전체 업무</div>
+                    <div id="modal-stat-total" style="font-size:18px; font-weight:bold; color:#fff;">23건</div>
+                </div>
+                <div style="width:1px; height:24px; background:rgba(255,255,255,0.1);"></div>
+                <div>
+                    <div style="font-size:11px; color:#34d399;">완결 (Pass)</div>
+                    <div id="modal-stat-done" style="font-size:18px; font-weight:bold; color:#34d399;">3건</div>
+                </div>
+                <div style="width:1px; height:24px; background:rgba(255,255,255,0.1);"></div>
+                <div>
+                    <div style="font-size:11px; color:#38bdf8;">실시간 진행중</div>
+                    <div id="modal-stat-doing" style="font-size:18px; font-weight:bold; color:#38bdf8;">4건</div>
+                </div>
+                <div style="width:1px; height:24px; background:rgba(255,255,255,0.1);"></div>
+                <div>
+                    <div style="font-size:11px; color:#f87171;">미결 / 대기</div>
+                    <div id="modal-stat-pending" style="font-size:18px; font-weight:bold; color:#f87171;">16건</div>
+                </div>
+            </div>
+
+            <!-- 4인 에이전트별 업무 타임라인 뷰 -->
+            <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap:12px;" id="modal-agents-grid">
+                <!-- 동적 렌더링 -->
+            </div>
+
+            <div style="display:flex; justify-content:space-between; align-items:center; border-top:1px solid rgba(139,107,62,0.4); padding-top:12px;">
+                <span style="font-size:11px; color:var(--text-sub);">
+                    💬 실시간 소통 채널: <b>general_live</b> 단일 채널 통합 가동 중
+                </span>
+                <button class="agent-btn" style="padding:8px 18px; font-size:12px;" onclick="closeGlobalScheduleModal()">관제 지도 복귀</button>
+            </div>
+        </div>
+    </div>
+
+        <!-- Vol.2 엔딩 모달 다이얼로그 -->
     <div id="ending-modal">
         <div class="ending-box">
             <h2>🏆 대륙 탐험 대성공!</h2>
@@ -729,6 +937,24 @@
             const card = document.getElementById('info-card');
             card.classList.add('active');
 
+            // 에이전트 탭 자동 동기화 (미결 업무 대시보드)
+            const realmToAgent = {
+                'pobbagi': 'anti',
+                'capital': 'manbok',
+                'youtube': 'kony',
+                'cline': 'cline',
+                'skills': 'anti',
+                'constitution': 'manbok',
+                'workspace': 'all',
+                'osmu': 'all'
+            };
+            const targetAgent = realmToAgent[id] || 'all';
+            document.querySelectorAll('.dash-tab-btn').forEach(b => {
+                b.classList.toggle('active', b.dataset.agent === targetAgent);
+            });
+            renderScheduleDashboard(targetAgent);
+
+
             // 4퀘스트 올 클리어 시 Vol.2 엔딩 모달 발동!
             if (quests.q1 && quests.q2 && quests.q3 && quests.q4) {
                 setTimeout(() => {
@@ -797,6 +1023,9 @@
         setInterval(checkManbokStatus, 5000);
         checkManbokStatus();
     </script>
+
+
+
 
 
 <script>
@@ -952,6 +1181,7 @@
     toast: toast, countdown: countdown, KEY: KEY };
 })();
 </script>
+
 <script>
 /* ===== v0.4.2 cline 미니맵 (v0.4.1 패치 뒤에 이어 붙이면 동작 / 원본 무수정) =====
    2400x1600 월드 전체를 180x120 캔버스에 축소 표시.
@@ -1074,6 +1304,242 @@
   /* 테스트/검증용 노출 */
   window.__clineV042 = { draw: drawMini, nodes: NODES, canvas: cv,
     world: { W: W, H: H, MW: MW, MH: MH } };
+})();
+</script>
+
+<script>
+/* ===== v1.0 cline 비주얼 레이어 (외부파일 0개 · v041/v042 뒤에 이어 붙이면 동작) =====
+   의뢰서 스펙1: 양피지/해양 텍스처 · 나침반(Compass Rose) · 점선 항로 애니메이션 · 신대륙 안개
+   전부 절차 생성(SVG + canvas noise)이라 단일 HTML 원칙 유지. 원본 소스 수정 없음. */
+(function () {
+  var W = 2400, H = 1600, Z = 5;   // z-index: 영토 노드(10) 아래
+  var GOLD = "#f5c542", PARCH = "#8b6b3e";
+
+  /* ---------- 영토 좌표 (DOM 파싱 → 실패 시 실측표) ---------- */
+  var FALLBACK = {
+    capital: [1200, 780], android: [1550, 680], youtube: [1420, 1080],
+    pobbagi: [900, 860], realtime: [1100, 1140], cline: [980, 580],
+    skills: [1280, 540], workspace: [1220, 960], constitution: [1160, 620],
+    patent: [1350, 320], agent_reach: [400, 650], osmu: [1280, 1350]
+  };
+  var P = {};
+  try {
+    var nodes = document.querySelectorAll ? document.querySelectorAll(".realm-node") : [];
+    for (var i = 0; i < nodes.length; i++) {
+      var st = nodes[i].getAttribute("style") || "";
+      var oc = nodes[i].getAttribute("onclick") || "";
+      var mt = /top:\s*(-?\d+)px/.exec(st), ml = /left:\s*(-?\d+)px/.exec(st);
+      var mi = /selectRealm\('([^']+)'\)/.exec(oc);
+      if (mt && ml && mi) P[mi[1]] = [+ml[1], +mt[1]];
+    }
+  } catch (e) {}
+  for (var k in FALLBACK) if (!P[k]) P[k] = FALLBACK[k];
+
+  var world = document.getElementById("map-world");
+  if (!world) return;
+
+  /* ---------- 공통 스타일 주입 ---------- */
+  var css = document.createElement("style");
+  css.textContent =
+    "#cline-ocean,#cline-routes,#cline-parchment{position:absolute;inset:0;" +
+    "pointer-events:none;z-index:" + Z + "}" +
+    "#cline-parchment{mix-blend-mode:overlay;opacity:.5}" +
+    "#cline-ocean{background:radial-gradient(1200px 700px at 30% 20%," +
+    "rgba(60,120,190,.16),transparent 70%)," +
+    "radial-gradient(1000px 600px at 75% 80%,rgba(30,90,150,.18),transparent 70%);" +
+    "animation:clineDrift 18s ease-in-out infinite alternate}" +
+    "@keyframes clineDrift{from{transform:translate3d(-40px,-24px,0) scale(1)}" +
+    "to{transform:translate3d(40px,24px,0) scale(1.06)}}" +
+    "#cline-routes path{fill:none;stroke:" + GOLD + ";stroke-width:3.5;" +
+    "stroke-linecap:round;stroke-dasharray:16 14;opacity:.34;" +
+    "animation:clineDash 7s linear infinite}" +
+    "#cline-routes path.lit{opacity:.9;stroke-width:4.5;filter:url(#clineGlow)}" +
+    "@keyframes clineDash{to{stroke-dashoffset:-300}}" +
+    "#cline-routes text{fill:" + PARCH + ";font:600 22px 'Cinzel',serif;" +
+    "opacity:.75;letter-spacing:3px}" +
+    ".cline-fog{position:absolute;pointer-events:none;z-index:" + (Z + 1) + ";" +
+    "border-radius:50%;filter:blur(26px);transition:opacity 1.4s ease;" +
+    "background:radial-gradient(circle,rgba(150,110,220,.55),rgba(90,60,150,.22) 55%," +
+    "transparent 72%)}" +
+    "@keyframes clineFogA{from{transform:translate(0,0) scale(1)}" +
+    "50%{transform:translate(26px,-18px) scale(1.12)}" +
+    "to{transform:translate(-14px,16px) scale(.96)}}" +
+    ".compass-rose{opacity:.5!important;transition:opacity .6s}" +
+    "#cline-needle{transform-origin:50px 50px;animation:clineNeedle 9s ease-in-out infinite}" +
+    "@keyframes clineNeedle{0%{transform:rotate(-7deg)}50%{transform:rotate(7deg)}" +
+    "100%{transform:rotate(-7deg)}}";
+  try { (document.head || document.body).appendChild(css); } catch (e) {}
+
+  /* ---------- 1) 양피지 텍스처 (canvas 노이즈 → data URL) ---------- */
+  function parchment() {
+    var cv = document.createElement("canvas");
+    cv.width = cv.height = 128;
+    var g = null;
+    try { g = cv.getContext("2d"); } catch (e) {}
+    if (g) {
+      var d = g.createImageData(128, 128);
+      for (var n = 0; n < d.data.length; n += 4) {
+        var v = 150 + ((n * 2654435761) % 90);
+        d.data[n] = d.data[n + 1] = d.data[n + 2] = v;
+        d.data[n + 3] = 26;
+      }
+      g.putImageData(d, 0, 0);
+    }
+    var el = document.createElement("div");
+    el.id = "cline-parchment";
+    try { el.style.backgroundImage = "url(" + cv.toDataURL() + ")"; } catch (e) {}
+    return el;
+  }
+
+  /* ---------- 2) 해양 그라데이션 레이어 ---------- */
+  function ocean() {
+    var el = document.createElement("div");
+    el.id = "cline-ocean";
+    return el;
+  }
+
+  /* ---------- 3) 점선 항로 (수도 → 각 영토, 해상 항로 느낌의 곡선) ---------- */
+  function routes() {
+    var hub = P.capital || [W / 2, H / 2];
+    if (!document.createElementNS) return null;
+    var NS = "http://www.w3.org/2000/svg";
+    var svg = document.createElementNS(NS, "svg");
+    svg.setAttribute("id", "cline-routes");
+    svg.setAttribute("viewBox", "0 0 " + W + " " + H);
+    svg.setAttribute("width", W);
+    svg.setAttribute("height", H);
+    var defs = document.createElementNS(NS, "defs");
+    var f = document.createElementNS(NS, "filter");
+    f.setAttribute("id", "clineGlow");
+    var fb = document.createElementNS(NS, "feGaussianBlur");
+    fb.setAttribute("stdDeviation", "4");
+    fb.setAttribute("result", "b");
+    var fm = document.createElementNS(NS, "feMerge");
+    ["b", "SourceGraphic"].forEach(function (s) {
+      var mn = document.createElementNS(NS, "feMergeNode");
+      mn.setAttribute("in", s);
+      fm.appendChild(mn);
+    });
+    f.appendChild(fb); f.appendChild(fm); defs.appendChild(f); svg.appendChild(defs);
+
+    var order = ["android", "youtube", "pobbagi", "realtime", "cline", "skills",
+      "workspace", "constitution", "patent", "osmu", "agent_reach"];
+    var st = window.gameState || window.state || null;
+    var visited = (st && (st.visitedLands || st.visited)) || null;
+    var isV = function (id) {
+      if (window.visitedLands && window.visitedLands.has) return window.visitedLands.has(id);
+      if (st && st.visitedLands && st.visitedLands.has) return st.visitedLands.has(id);
+      if (visited instanceof Array) return visited.indexOf(id) >= 0;
+      return false;
+    };
+    order.forEach(function (id, ix) {
+      if (!P[id]) return;
+      var a = hub, b = P[id];
+      var mx = (a[0] + b[0]) / 2, my = (a[1] + b[1]) / 2;
+      var dx = b[0] - a[0], dy = b[1] - a[1];
+      var len = Math.sqrt(dx * dx + dy * dy) || 1;
+      var bow = 46 + (ix % 4) * 16;              // 바깥으로 볼록한 항로
+      var cx = mx - dy / len * bow, cy = my + dx / len * bow;
+      var p = document.createElementNS(NS, "path");
+      p.setAttribute("d", "M" + a[0] + " " + a[1] + " Q" + Math.round(cx) + " " +
+        Math.round(cy) + " " + b[0] + " " + b[1]);
+      p.setAttribute("style", "animation-delay:" + (-ix * 0.8) + "s");
+      if (isV(id)) p.setAttribute("class", "lit");
+      try { p.dataset.realm = id; } catch (e) {}
+      svg.appendChild(p);
+    });
+
+    // 항로 표기(범례) — 지도 좌하단
+    var t = document.createElementNS(NS, "text");
+    t.setAttribute("x", 120); t.setAttribute("y", H - 90);
+    t.textContent = "SEA ROUTE";
+    svg.appendChild(t);
+    return svg;
+  }
+
+  /* ---------- 4) 나침반 업그레이드 (기존 .compass-rose에 바늘 + N/E/S/W 추가) ---------- */
+  function compass() {
+    var cv = document.querySelector ? document.querySelector(".compass-rose") : null;
+    if (!cv || !document.createElementNS ||
+        document.getElementById("cline-needle")) return;
+    var NS = "http://www.w3.org/2000/svg";
+    var g = document.createElementNS(NS, "g");
+    g.setAttribute("id", "cline-needle");
+    var n = document.createElementNS(NS, "path");   // 북침
+    n.setAttribute("d", "M50 16 L55 52 L50 46 L45 52 Z");
+    n.setAttribute("fill", GOLD);
+    var s = document.createElementNS(NS, "path");   // 남침
+    s.setAttribute("d", "M50 84 L55 48 L50 54 L45 48 Z");
+    s.setAttribute("fill", PARCH);
+    g.appendChild(n); g.appendChild(s);
+    cv.appendChild(g);
+    [["N", 50, 13], ["E", 89, 55], ["S", 50, 95], ["W", 11, 55]].forEach(function (c) {
+      var tx = document.createElementNS(NS, "text");
+      tx.setAttribute("x", c[1]); tx.setAttribute("y", c[2]);
+      tx.setAttribute("text-anchor", "middle");
+      tx.setAttribute("fill", GOLD);
+      tx.setAttribute("font-size", "13");
+      tx.setAttribute("font-family", "Cinzel, serif");
+      tx.textContent = c[0];
+      cv.appendChild(tx);
+    });
+  }
+
+  /* ---------- 방문 여부 (안티 원본 전역 visitedLands 를 읽되 실패해도 무해) ---------- */
+  function seen(id) {
+    try { return !!visitedLands.has(id); } catch (e) {}
+    try { return !!(window.visitedLands && window.visitedLands.has(id)); } catch (e) {}
+    return false;
+  }
+
+  /* ---------- 5) 신대륙 안개 (미방문 시 짙게, 방문하면 걷힘) ---------- */
+  var fogEls = [];
+  function fog() {
+    var c = P.agent_reach || [400, 650];
+    [[520, 360, 0], [380, 270, 1]].forEach(function (s) {
+      var d = document.createElement("div");
+      d.className = "cline-fog";
+      d.style.width = s[0] + "px";
+      d.style.height = s[1] + "px";
+      // 지도 밖으로 안개가 튀어나가지 않도록 좌표 클램프
+      d.style.left = Math.max(0, c[0] - s[0] / 2 + (s[2] ? 90 : 0)) + "px";
+      d.style.top = Math.max(0, c[1] - s[1] / 2 - (s[2] ? 60 : 0)) + "px";
+      d.style.animation = "clineFogA " + (s[2] ? 13 : 9) + "s ease-in-out infinite alternate";
+      d.style.opacity = seen("agent_reach") ? "0" : (s[2] ? "0.75" : "0.95");
+      world.appendChild(d);
+      fogEls.push(d);
+    });
+  }
+
+  /* ---------- 상태 동기화 (항로 점등 + 안개 걷힘) ---------- */
+  function sync() {
+    var ps = (document.querySelectorAll ? document.querySelectorAll("#cline-routes path") : []) || [];
+    for (var i = 0; i < ps.length; i++) {
+      var id = null;
+      try { id = ps[i].dataset.realm; } catch (e) {}
+      if (id && seen(id) && !/\blit\b/.test(ps[i].getAttribute("class") || "")) {
+        ps[i].setAttribute("class", "lit");
+      }
+    }
+    var vis = seen("agent_reach");
+    for (var j = 0; j < fogEls.length; j++) {
+      fogEls[j].style.opacity = vis ? "0" : (j ? "0.75" : "0.95");
+    }
+  }
+
+  /* ---------- 부팅 ---------- */
+  world.appendChild(ocean());
+  world.appendChild(parchment());
+  var rsvg = routes();
+  if (rsvg) world.appendChild(rsvg);
+  compass();
+  fog();
+  sync();
+  setInterval(sync, 900);
+
+  /* 테스트/검증용 노출 */
+  window.__clineV10 = { version: "1.0", P: P, routes: rsvg, fog: fogEls,
+    refresh: sync, seen: seen };
 })();
 </script>
 </body>

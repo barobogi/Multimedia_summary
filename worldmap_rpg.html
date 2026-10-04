@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>3AI ROOT REALM — 판타지 탐험 지도</title>
+    <title>3AI ROOT REALM — 실시간 관제 RPG 월드맵</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;800;900&family=Noto+Serif+KR:wght@400;600;700&display=swap" rel="stylesheet">
@@ -14,18 +14,12 @@
             --parchment-border: #8b6b3e;
             --gold: #f5c542;
             --gold-glow: rgba(245, 197, 66, 0.4);
-            --card-bg: rgba(13, 22, 35, 0.92);
+            --card-bg: rgba(13, 22, 35, 0.94);
             --text-main: #e6dfcf;
             --text-sub: #9ca3af;
         }
 
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-            user-select: none;
-            -webkit-user-select: none;
-        }
+        * { box-sizing: border-box; margin: 0; padding: 0; user-select: none; -webkit-user-select: none; }
 
         body {
             background-color: var(--bg-ocean);
@@ -36,35 +30,23 @@
             height: 100vh;
         }
 
-        /* RPG 나침반 배경 패턴 */
         #map-viewport {
             position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            overflow: hidden;
-            cursor: grab;
+            top: 0; left: 0; width: 100%; height: 100%;
+            overflow: hidden; cursor: grab;
             background: radial-gradient(circle at 50% 50%, #10243d 0%, #08101a 100%);
         }
-
-        #map-viewport:active {
-            cursor: grabbing;
-        }
+        #map-viewport:active { cursor: grabbing; }
 
         #map-world {
             position: absolute;
-            width: 2400px;
-            height: 1600px;
+            width: 2400px; height: 1600px;
             transform-origin: 0 0;
-            transition: transform 0.05s linear;
+            transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
         }
 
-        /* 바다 격자 및 나침반 배경 */
         .ocean-decorations {
-            position: absolute;
-            inset: 0;
-            pointer-events: none;
+            position: absolute; inset: 0; pointer-events: none;
             background-image: 
                 linear-gradient(var(--ocean-grid) 1px, transparent 1px),
                 linear-gradient(90deg, var(--ocean-grid) 1px, transparent 1px);
@@ -72,76 +54,32 @@
         }
 
         .compass-rose {
-            position: absolute;
-            top: 140px;
-            right: 180px;
-            width: 220px;
-            height: 220px;
-            opacity: 0.25;
-            pointer-events: none;
+            position: absolute; top: 140px; right: 180px;
+            width: 220px; height: 220px; opacity: 0.25; pointer-events: none;
         }
 
-        .sea-monster {
-            position: absolute;
-            bottom: 220px;
-            left: 200px;
-            opacity: 0.2;
-            font-size: 70px;
-            pointer-events: none;
-            filter: grayscale(1);
-        }
-
-        /* 영토(Landmass) SVG 지형 레이어 */
-        .continent {
-            position: absolute;
-            cursor: pointer;
-            transition: filter 0.25s, transform 0.25s;
-        }
-
-        .continent:hover {
-            filter: drop-shadow(0 0 16px var(--gold-glow));
-            transform: scale(1.02);
-        }
-
-        /* 랜드마크 거점 마커 */
+        /* 영토 노드 */
         .realm-node {
-            position: absolute;
-            transform: translate(-50%, -50%);
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            cursor: pointer;
-            z-index: 10;
+            position: absolute; transform: translate(-50%, -50%);
+            display: flex; flex-direction: column; align-items: center;
+            cursor: pointer; z-index: 10;
             transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
         }
-
-        .realm-node:hover {
-            transform: translate(-50%, -58%) scale(1.1);
-            z-index: 50;
-        }
+        .realm-node:hover { transform: translate(-50%, -58%) scale(1.1); z-index: 50; }
 
         .node-pin {
-            width: 58px;
-            height: 58px;
-            border-radius: 50%;
+            width: 58px; height: 58px; border-radius: 50%;
             background: linear-gradient(135deg, #1e293b, #0f172a);
             border: 2px solid var(--parchment-border);
-            display: flex;
-            align-items: center;
-            justify-content: center;
+            display: flex; align-items: center; justify-content: center;
             font-size: 26px;
             box-shadow: 0 8px 24px rgba(0, 0, 0, 0.6), 0 0 12px var(--gold-glow);
             position: relative;
         }
-
         .node-pin::after {
-            content: '';
-            position: absolute;
-            bottom: -8px;
-            left: 50%;
+            content: ''; position: absolute; bottom: -8px; left: 50%;
             transform: translateX(-50%);
-            border-left: 6px solid transparent;
-            border-right: 6px solid transparent;
+            border-left: 6px solid transparent; border-right: 6px solid transparent;
             border-top: 8px solid var(--parchment-border);
         }
 
@@ -151,7 +89,6 @@
             box-shadow: 0 0 25px rgba(245, 197, 66, 0.6);
             animation: pulse-capital 2.5s infinite;
         }
-
         .realm-node.unexplored .node-pin {
             border-color: #a855f7;
             background: linear-gradient(135deg, #2e1065, #0f0728);
@@ -160,297 +97,157 @@
         }
 
         .node-tag {
-            margin-top: 10px;
-            background: rgba(10, 16, 26, 0.88);
-            border: 1px solid var(--parchment-border);
-            border-radius: 6px;
-            padding: 4px 10px;
-            font-size: 13px;
-            font-weight: 600;
-            color: #f3ece0;
+            margin-top: 10px; background: rgba(10, 16, 26, 0.9);
+            border: 1px solid var(--parchment-border); border-radius: 6px;
+            padding: 4px 10px; font-size: 13px; font-weight: 600; color: #f3ece0;
+            white-space: nowrap; box-shadow: 0 4px 12px rgba(0,0,0,0.5);
+        }
+        .node-tag small { display: block; font-size: 10px; color: var(--gold); }
+
+        /* 실시간 에이전트 캐릭터 아바타 */
+        .agent-avatar {
+            position: absolute; transform: translate(-50%, -100%);
+            display: flex; flex-direction: column; align-items: center;
+            z-index: 60; cursor: pointer;
+            transition: all 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+        .agent-avatar:hover { transform: translate(-50%, -110%) scale(1.15); }
+
+        .agent-bubble {
+            background: rgba(15, 23, 42, 0.95);
+            border: 1px solid var(--gold);
+            border-radius: 8px;
+            padding: 6px 12px;
+            font-size: 12px;
+            color: #ffffff;
             white-space: nowrap;
-            letter-spacing: 0.5px;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.5);
+            margin-bottom: 8px;
+            box-shadow: 0 4px 16px rgba(0,0,0,0.7);
+            animation: bounce-bubble 2s infinite ease-in-out;
+            position: relative;
+        }
+        .agent-bubble::after {
+            content: ''; position: absolute; bottom: -6px; left: 50%;
+            transform: translateX(-50%);
+            border-left: 5px solid transparent; border-right: 5px solid transparent;
+            border-top: 6px solid var(--gold);
         }
 
-        .node-tag small {
-            display: block;
-            font-size: 10px;
-            color: var(--gold);
-            font-weight: normal;
+        .agent-sprite {
+            width: 44px; height: 44px; border-radius: 50%;
+            background: linear-gradient(135deg, #1e293b, #0f172a);
+            border: 2px solid #ffffff;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 22px;
+            box-shadow: 0 0 15px rgba(255, 255, 255, 0.5);
+        }
+
+        @keyframes bounce-bubble {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-4px); }
         }
 
         /* 항로 연결 점선 (SVG) */
-        .trade-routes {
-            position: absolute;
-            inset: 0;
-            pointer-events: none;
-            z-index: 5;
-        }
-
+        .trade-routes { position: absolute; inset: 0; pointer-events: none; z-index: 5; }
         .route-line {
-            stroke: #d4af37;
-            stroke-width: 2.5;
-            stroke-dasharray: 8 8;
-            stroke-linecap: round;
-            opacity: 0.55;
-            animation: dash 30s linear infinite;
+            stroke: #d4af37; stroke-width: 2.5; stroke-dasharray: 8 8;
+            stroke-linecap: round; opacity: 0.55; animation: dash 30s linear infinite;
         }
-
-        @keyframes dash {
-            to { stroke-dashoffset: -1000; }
-        }
+        @keyframes dash { to { stroke-dashoffset: -1000; } }
 
         @keyframes pulse-capital {
             0%, 100% { box-shadow: 0 0 15px rgba(245, 197, 66, 0.4); }
             50% { box-shadow: 0 0 35px rgba(245, 197, 66, 0.8); }
         }
-
         @keyframes pulse-purple {
             0%, 100% { box-shadow: 0 0 12px rgba(168, 85, 247, 0.4); }
             50% { box-shadow: 0 0 30px rgba(168, 85, 247, 0.85); }
         }
 
-        /* 상단 네비게이션 헤더 (판타지 UI) */
+        /* 상단 네비게이션 헤더 */
         .hud-header {
-            position: absolute;
-            top: 20px;
-            left: 20px;
-            right: 20px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            z-index: 100;
-            pointer-events: none;
+            position: absolute; top: 16px; left: 16px; right: 16px;
+            display: flex; justify-content: space-between; align-items: flex-start;
+            z-index: 100; pointer-events: none; flex-wrap: wrap; gap: 12px;
         }
-
-        .hud-header > * {
-            pointer-events: auto;
-        }
+        .hud-header > * { pointer-events: auto; }
 
         .title-plate {
-            background: var(--card-bg);
-            border: 2px solid var(--parchment-border);
-            border-radius: 12px;
-            padding: 12px 24px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.7), inset 0 0 15px rgba(139, 107, 62, 0.2);
-            backdrop-filter: blur(8px);
+            background: var(--card-bg); border: 2px solid var(--parchment-border);
+            border-radius: 12px; padding: 10px 18px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.7); backdrop-filter: blur(8px);
         }
-
         .title-plate h1 {
-            font-family: 'Cinzel', serif;
-            font-size: 22px;
-            font-weight: 900;
-            color: var(--gold);
-            letter-spacing: 2px;
-            text-shadow: 0 2px 8px rgba(0,0,0,0.8);
+            font-family: 'Cinzel', serif; font-size: 20px; font-weight: 900;
+            color: var(--gold); letter-spacing: 2px;
         }
+        .title-plate p { font-size: 11px; color: var(--text-sub); margin-top: 2px; }
 
-        .title-plate p {
-            font-size: 12px;
-            color: var(--text-sub);
-            margin-top: 2px;
-        }
-
-        .progress-box {
-            display: flex;
+        .tracker-bar {
+            background: var(--card-bg); border: 2px solid var(--parchment-border);
+            border-radius: 12px; padding: 8px 14px; display: flex; gap: 8px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.7); backdrop-filter: blur(8px);
             align-items: center;
-            gap: 12px;
-            margin-top: 6px;
+        }
+        .tracker-label { font-size: 11px; color: var(--gold); font-weight: bold; margin-right: 4px; }
+        .agent-btn {
+            background: #132238; border: 1px solid #2b4a6f; border-radius: 8px;
+            color: #ffffff; padding: 6px 12px; font-size: 12px; font-weight: bold;
+            cursor: pointer; transition: all 0.2s; display: flex; align-items: center; gap: 6px;
+        }
+        .agent-btn:hover {
+            background: #1e3a5f; border-color: var(--gold); transform: translateY(-2px);
+            box-shadow: 0 4px 12px var(--gold-glow);
         }
 
-        .progress-bar-bg {
-            width: 140px;
-            height: 8px;
-            background: #1e293b;
-            border-radius: 4px;
-            overflow: hidden;
-            border: 1px solid rgba(255,255,255,0.1);
-        }
-
-        .progress-bar-fill {
-            width: 68%;
-            height: 100%;
-            background: linear-gradient(90deg, #d97706, #fbbf24);
-        }
-
-        .control-panel {
-            display: flex;
-            gap: 10px;
-        }
-
-        .rpg-btn {
-            background: var(--card-bg);
-            border: 1px solid var(--parchment-border);
-            border-radius: 8px;
-            color: var(--gold);
-            padding: 10px 16px;
-            font-family: 'Noto Serif KR', serif;
-            font-size: 13px;
-            font-weight: 600;
-            cursor: pointer;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.5);
-            transition: all 0.2s;
-            backdrop-filter: blur(8px);
-        }
-
-        .rpg-btn:hover {
-            background: #1c2b42;
-            border-color: var(--gold);
-            transform: translateY(-2px);
-            box-shadow: 0 6px 16px var(--gold-glow);
-        }
-
-        /* 우측 RPG 영토 정보 퀘스트 카드 (사이드 모달) */
+        /* 우측 RPG 정보 모달 */
         .info-card {
-            position: absolute;
-            top: 90px;
-            right: 20px;
-            width: 360px;
-            max-width: calc(100vw - 40px);
-            background: var(--card-bg);
-            border: 2px solid var(--parchment-border);
-            border-radius: 14px;
-            padding: 24px;
-            box-shadow: 0 16px 40px rgba(0,0,0,0.8), inset 0 0 20px rgba(139, 107, 62, 0.15);
-            backdrop-filter: blur(12px);
-            z-index: 100;
-            transform: translateX(400px);
-            opacity: 0;
+            position: absolute; top: 90px; right: 20px; width: 360px;
+            max-width: calc(100vw - 40px); background: var(--card-bg);
+            border: 2px solid var(--parchment-border); border-radius: 14px;
+            padding: 22px; box-shadow: 0 16px 40px rgba(0,0,0,0.8);
+            backdrop-filter: blur(12px); z-index: 100;
+            transform: translateX(420px); opacity: 0;
             transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.3s;
             pointer-events: none;
         }
-
-        .info-card.active {
-            transform: translateX(0);
-            opacity: 1;
-            pointer-events: auto;
-        }
-
-        .close-btn {
-            position: absolute;
-            top: 14px;
-            right: 14px;
-            background: none;
-            border: none;
-            color: var(--text-sub);
-            font-size: 20px;
-            cursor: pointer;
-        }
-
+        .info-card.active { transform: translateX(0); opacity: 1; pointer-events: auto; }
+        .close-btn { position: absolute; top: 12px; right: 14px; background: none; border: none; color: var(--text-sub); font-size: 22px; cursor: pointer; }
         .close-btn:hover { color: var(--gold); }
 
-        .card-realm-type {
-            font-family: 'Cinzel', serif;
-            font-size: 11px;
-            color: var(--gold);
-            letter-spacing: 2px;
-            text-transform: uppercase;
-        }
-
-        .card-realm-title {
-            font-size: 20px;
-            font-weight: 700;
-            margin: 6px 0 12px;
-            color: #ffffff;
-        }
+        .card-realm-type { font-family: 'Cinzel', serif; font-size: 11px; color: var(--gold); letter-spacing: 2px; text-transform: uppercase; }
+        .card-realm-title { font-size: 19px; font-weight: 700; margin: 4px 0 10px; color: #ffffff; }
 
         .realm-stats-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 10px;
-            margin: 16px 0;
-            background: rgba(0,0,0,0.3);
-            padding: 12px;
-            border-radius: 8px;
-            border: 1px solid rgba(255,255,255,0.06);
+            display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin: 14px 0;
+            background: rgba(0,0,0,0.3); padding: 10px; border-radius: 8px;
         }
+        .stat-item { font-size: 11px; }
+        .stat-label { color: var(--text-sub); margin-bottom: 2px; }
+        .stat-val { font-size: 14px; font-weight: 700; color: #f3ece0; }
 
-        .stat-item {
-            font-size: 12px;
-        }
-
-        .stat-label {
-            color: var(--text-sub);
-            margin-bottom: 2px;
-        }
-
-        .stat-val {
-            font-size: 15px;
-            font-weight: 700;
-            color: #f3ece0;
-        }
-
-        .card-desc {
-            font-size: 13px;
-            line-height: 1.6;
-            color: #d1d5db;
-            margin-bottom: 18px;
-        }
-
+        .card-desc { font-size: 12px; line-height: 1.6; color: #d1d5db; margin-bottom: 14px; }
         .card-quest-box {
-            background: rgba(245, 197, 66, 0.08);
-            border-left: 3px solid var(--gold);
-            padding: 10px 14px;
-            border-radius: 0 6px 6px 0;
-            font-size: 12px;
+            background: rgba(245, 197, 66, 0.08); border-left: 3px solid var(--gold);
+            padding: 8px 12px; border-radius: 0 6px 6px 0; font-size: 11px;
         }
+        .card-quest-box strong { color: var(--gold); display: block; margin-bottom: 2px; }
 
-        .card-quest-box strong {
-            color: var(--gold);
-            display: block;
-            margin-bottom: 3px;
-        }
-
-        /* 줌 컨트롤러 */
         .zoom-controls {
-            position: absolute;
-            bottom: 24px;
-            right: 24px;
-            display: flex;
-            flex-direction: column;
-            gap: 8px;
-            z-index: 90;
+            position: absolute; bottom: 20px; right: 20px;
+            display: flex; flex-direction: column; gap: 8px; z-index: 90;
         }
-
         .zoom-btn {
-            width: 44px;
-            height: 44px;
-            background: var(--card-bg);
-            border: 1px solid var(--parchment-border);
-            border-radius: 8px;
-            color: var(--gold);
-            font-size: 20px;
-            font-weight: bold;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            cursor: pointer;
-            box-shadow: 0 6px 16px rgba(0,0,0,0.6);
+            width: 40px; height: 40px; background: var(--card-bg);
+            border: 1px solid var(--parchment-border); border-radius: 8px;
+            color: var(--gold); font-size: 20px; font-weight: bold;
+            display: flex; align-items: center; justify-content: center; cursor: pointer;
         }
 
-        .zoom-btn:hover {
-            background: #1c2b42;
-            border-color: var(--gold);
-        }
-
-        /* 안개 (Fog of War) 효과 */
         .fog-of-war {
-            position: absolute;
-            top: 300px;
-            left: 80px;
-            width: 440px;
-            height: 380px;
+            position: absolute; top: 300px; left: 80px; width: 440px; height: 380px;
             background: radial-gradient(circle, rgba(168, 85, 247, 0.15) 0%, rgba(9, 19, 31, 0.7) 70%);
-            border-radius: 50%;
-            pointer-events: none;
-            filter: blur(25px);
-            animation: fog-drift 8s infinite alternate ease-in-out;
-        }
-
-        @keyframes fog-drift {
-            0% { transform: scale(1) translate(0, 0); }
-            100% { transform: scale(1.1) translate(20px, 15px); }
+            border-radius: 50%; pointer-events: none; filter: blur(25px);
         }
     </style>
 </head>
@@ -462,26 +259,17 @@
 
             <!-- 항로 (Trade Routes) -->
             <svg class="trade-routes" width="2400" height="1600">
-                <!-- 수도 -> 안드로이드 왕국 -->
                 <path class="route-line" d="M 1200 780 Q 1380 720 1550 680" />
-                <!-- 수도 -> 영상 제도 -->
                 <path class="route-line" d="M 1200 780 Q 1280 940 1420 1080" />
-                <!-- 수도 -> 뽀개기 평원 -->
                 <path class="route-line" d="M 1200 780 Q 1050 820 900 860" />
-                <!-- 수도 -> 화산열도 -->
                 <path class="route-line" d="M 1200 780 Q 1120 960 1100 1140" />
-                <!-- 수도 -> 감찰관 영지 -->
                 <path class="route-line" d="M 1200 780 Q 1080 640 980 580" />
-                <!-- 뽀개기 평원 -> Agent-Reach 신대륙 항로 개척선 -->
                 <path class="route-line" d="M 900 860 Q 650 780 400 650" style="stroke: #c084fc; stroke-dasharray: 6 10;" />
-                <!-- 영상제도 -> 남쪽 OSMU 5개섬 -->
                 <path class="route-line" d="M 1420 1080 Q 1360 1250 1280 1350" style="stroke: #38bdf8;" />
             </svg>
 
-            <!-- 안개 이펙트 (Agent-Reach 미개척지) -->
             <div class="fog-of-war"></div>
 
-            <!-- RPG 나침반 -->
             <svg class="compass-rose" viewBox="0 0 100 100">
                 <circle cx="50" cy="50" r="46" fill="none" stroke="#8b6b3e" stroke-width="1.5" />
                 <polygon points="50,4 55,45 50,40 45,45" fill="#f5c542" />
@@ -492,113 +280,89 @@
             </svg>
 
             <!-- ================= 영토 노드들 ================= -->
-
-            <!-- 1. 중앙 수도 (AI_hub) -->
             <div class="realm-node capital" style="top: 780px; left: 1200px;" onclick="selectRealm('capital')">
                 <div class="node-pin">🏛️</div>
-                <div class="node-tag">
-                    중앙 수도 AI_hub
-                    <small>파일 1,502개 · 총괄 요새</small>
-                </div>
+                <div class="node-tag">중앙 수도 AI_hub<small>1,502 파일 · 컨트롤 타워</small></div>
             </div>
 
-            <!-- 2. 안드로이드 왕국 (65_android_apps) -->
             <div class="realm-node" style="top: 680px; left: 1550px;" onclick="selectRealm('android')">
                 <div class="node-pin" style="border-color: #22c55e;">🤖</div>
-                <div class="node-tag">
-                    안드로이드 왕국
-                    <small>파일 4,691개 · 최대 대륙</small>
-                </div>
+                <div class="node-tag">안드로이드 왕국<small>4,691 파일 · 최대 대륙</small></div>
             </div>
 
-            <!-- 3. 영상 제도 (63_youtube_creator) -->
             <div class="realm-node" style="top: 1080px; left: 1420px;" onclick="selectRealm('youtube')">
                 <div class="node-pin" style="border-color: #ef4444;">🎬</div>
-                <div class="node-tag">
-                    영상 제도 (63_youtube)
-                    <small>파일 965개 · 쇼츠&본편 항구</small>
-                </div>
+                <div class="node-tag">영상 제도 (63)<small>965 파일 · 쇼츠/본편 항구</small></div>
             </div>
 
-            <!-- 4. 뽀개기 평원 (25_auto_pobbagi) -->
             <div class="realm-node" style="top: 860px; left: 900px;" onclick="selectRealm('pobbagi')">
                 <div class="node-pin" style="border-color: #eab308;">🌾</div>
-                <div class="node-tag">
-                    뽀개기 평원
-                    <small>파일 565개 · 4호 개간중</small>
-                </div>
+                <div class="node-tag">뽀개기 평원 (25)<small>565 파일 · 4호 개간중</small></div>
             </div>
 
-            <!-- 5. 실시간 화산열도 (43_function_dev) -->
             <div class="realm-node" style="top: 1140px; left: 1100px;" onclick="selectRealm('realtime')">
                 <div class="node-pin" style="border-color: #f97316;">🌋</div>
-                <div class="node-tag">
-                    실시간 화산열도
-                    <small>파일 445개 · 3AI 신경망</small>
-                </div>
+                <div class="node-tag">실시간 화산열도 (43)<small>445 파일 · 신경망</small></div>
             </div>
 
-            <!-- 6. 감찰관 영지 (cline) -->
             <div class="realm-node" style="top: 580px; left: 980px;" onclick="selectRealm('cline')">
                 <div class="node-pin" style="border-color: #06b6d4;">🔍</div>
-                <div class="node-tag">
-                    외주 감찰관 영지 (cline)
-                    <small>파일 532개 · 관찰 성채</small>
-                </div>
+                <div class="node-tag">감찰관 영지 (cline)<small>532 파일 · 관찰 요새</small></div>
             </div>
 
-            <!-- 7. 스킬 군도 (.agents/skills) -->
             <div class="realm-node" style="top: 540px; left: 1280px;" onclick="selectRealm('skills')">
                 <div class="node-pin" style="border-color: #3b82f6;">🏝️</div>
-                <div class="node-tag">
-                    스킬 군도 (.agents)
-                    <small>10 Skills · 특수 무기고</small>
-                </div>
+                <div class="node-tag">스킬 군도 (.agents)<small>10 Skills · 무기고</small></div>
             </div>
 
-            <!-- 8. 전진기지 (_ai_workspace) -->
             <div class="realm-node" style="top: 960px; left: 1220px;" onclick="selectRealm('workspace')">
                 <div class="node-pin" style="border-color: #a855f7;">⛺</div>
-                <div class="node-tag">
-                    전진 기지 (_ai_workspace)
-                    <small>파일 247개 · 만복&안티 캠프</small>
-                </div>
+                <div class="node-tag">전진기지 (_ai_workspace)<small>247 파일 · 야영 캠프</small></div>
             </div>
 
-            <!-- 9. 헌법 성소 (Global_Define) -->
             <div class="realm-node" style="top: 620px; left: 1160px;" onclick="selectRealm('constitution')">
                 <div class="node-pin" style="border-color: #e2e8f0;">📜</div>
-                <div class="node-tag">
-                    헌법 성소 (Global_Define)
-                    <small>파일 121개 · 절대 성역</small>
-                </div>
+                <div class="node-tag">헌법 성소 (Global_Define)<small>121 성물 · 절대 성역</small></div>
             </div>
 
-            <!-- 10. 북방 설원 (11_특허아이디어) -->
             <div class="realm-node" style="top: 320px; left: 1350px;" onclick="selectRealm('patent')">
                 <div class="node-pin" style="border-color: #93c5fd;">❄️</div>
-                <div class="node-tag">
-                    북방 빙하 설원 (11_특허)
-                    <small>파일 23만 개 · 고대 서고</small>
-                </div>
+                <div class="node-tag">북방 설원 (11_특허)<small>23만 개 · 고대 빙하</small></div>
             </div>
 
-            <!-- 11. [신대륙] Agent-Reach (서쪽 바다) -->
             <div class="realm-node unexplored" style="top: 650px; left: 400px;" onclick="selectRealm('agent_reach')">
                 <div class="node-pin">🌊</div>
-                <div class="node-tag">
-                    [신대륙] Agent-Reach
-                    <small>GitHub ★89.8k · 개척 대기</small>
-                </div>
+                <div class="node-tag">[신대륙] Agent-Reach<small>GitHub ★89.8k · 개척 대기</small></div>
             </div>
 
-            <!-- 12. [남쪽 군도] OSMU 5개 섬 -->
             <div class="realm-node" style="top: 1350px; left: 1280px;" onclick="selectRealm('osmu')">
                 <div class="node-pin" style="border-color: #38bdf8;">⛵</div>
-                <div class="node-tag">
-                    OSMU 5개 군도
-                    <small>신문·만화·라디오·게임·검증</small>
-                </div>
+                <div class="node-tag">OSMU 5개 군도<small>신문·만화·라디오·게임·검증</small></div>
+            </div>
+
+            <!-- ================= 실시간 에이전트 캐릭터 아바타 레이어 ================= -->
+            <!-- 안티 아바타 -->
+            <div id="avatar-anti" class="agent-avatar" style="top: 830px; left: 900px;" onclick="focusAgent('anti')">
+                <div class="agent-bubble">🚀 안티: 12:00 쓰레드 뽀개기 1호 카드 조판 중!</div>
+                <div class="agent-sprite" style="border-color: #38bdf8;">🚀</div>
+            </div>
+
+            <!-- 만복 아바타 -->
+            <div id="avatar-manbok" class="agent-avatar" style="top: 750px; left: 1200px;" onclick="focusAgent('manbok')">
+                <div class="agent-bubble">👑 만복: 11:00 토큰 리셋 & 승인 게이트 대기 중</div>
+                <div class="agent-sprite" style="border-color: #fbbf24;">👑</div>
+            </div>
+
+            <!-- 코니 아바타 -->
+            <div id="avatar-kony" class="agent-avatar" style="top: 1050px; left: 1420px;" onclick="focusAgent('kony')">
+                <div class="agent-bubble">🔍 코니: 오늘 18:00 일요일 본편 D-1 검증 대기</div>
+                <div class="agent-sprite" style="border-color: #ec4899;">🔍</div>
+            </div>
+
+            <!-- 클라인 아바타 -->
+            <div id="avatar-cline" class="agent-avatar" style="top: 550px; left: 980px;" onclick="focusAgent('cline')">
+                <div class="agent-bubble">🕵️ 클라인: 미니 RPG game.html 납품 완료 & 대륙 측량</div>
+                <div class="agent-sprite" style="border-color: #06b6d4;">🕵️</div>
             </div>
 
         </div>
@@ -608,19 +372,16 @@
     <div class="hud-header">
         <div class="title-plate">
             <h1>THE 3AI ROOT REALM</h1>
-            <p>D:/AI 뿌리체계 무인 영토 탐험도 v1.0</p>
-            <div class="progress-box">
-                <div class="progress-bar-bg">
-                    <div class="progress-bar-fill"></div>
-                </div>
-                <span style="font-size: 11px; color: var(--gold); font-weight: bold;">개척률 68%</span>
-            </div>
+            <p>실시간 AI 에이전트 업무 연동 관제 RPG v1.1</p>
         </div>
 
-        <div class="control-panel">
-            <button class="rpg-btn" onclick="resetView()">🧭 중앙으로</button>
-            <button class="rpg-btn" onclick="filterType('all')">🗺️ 전체 영토</button>
-            <button class="rpg-btn" onclick="filterType('frontier')">⚔️ 개척 전선</button>
+        <div class="tracker-bar">
+            <span class="tracker-label">🎯 실시간 추적:</span>
+            <button class="agent-btn" onclick="focusAgent('anti')"><span>🚀</span> 안티 추적</button>
+            <button class="agent-btn" onclick="focusAgent('manbok')"><span>👑</span> 만복 추적</button>
+            <button class="agent-btn" onclick="focusAgent('kony')"><span>🔍</span> 코니 추적</button>
+            <button class="agent-btn" onclick="focusAgent('cline')"><span>🕵️</span> 클라인 추적</button>
+            <button class="agent-btn" style="background:#1e293b; border-color:#8b6b3e;" onclick="resetView()">🧭 전체 지도</button>
         </div>
     </div>
 
@@ -636,7 +397,7 @@
                 <div id="stat-files" class="stat-val">0</div>
             </div>
             <div class="stat-item">
-                <div class="stat-label">관할 수호자</div>
+                <div class="stat-label">주둔 에이전트</div>
                 <div id="stat-guardian" class="stat-val">3AI</div>
             </div>
             <div class="stat-item">
@@ -644,16 +405,16 @@
                 <div id="stat-status" class="stat-val">개척 완료</div>
             </div>
             <div class="stat-item">
-                <div class="stat-label">방어 레벨</div>
+                <div class="stat-label">보안 레벨</div>
                 <div id="stat-level" class="stat-val">Lv.99</div>
             </div>
         </div>
 
-        <p id="card-desc" class="card-desc">영토에 대한 상세한 설명이 여기에 표시됩니다.</p>
+        <p id="card-desc" class="card-desc">영토 상세 설명</p>
 
         <div class="card-quest-box">
-            <strong id="quest-title">진행 중인 퀘스트</strong>
-            <span id="quest-desc">현재 부여된 임무 내용</span>
+            <strong id="quest-title">실시간 임무</strong>
+            <span id="quest-desc">임무 내용</span>
         </div>
     </div>
 
@@ -664,66 +425,65 @@
     </div>
 
     <script>
-        // 영토 데이터베이스 (RPG 사양)
         const REALM_DATA = {
             capital: {
                 type: "수도 요새 (Imperial Capital)",
                 title: "중앙 수도 AI_hub",
                 files: "1,502 파일",
-                guardian: "만복 (PM/Auditor)",
+                guardian: "👑 만복 (Chief Auditor)",
                 status: "100% 수도 가동",
                 level: "Lv.99 (천공성)",
-                desc: "3AI의 두뇌이자 중추 통제 본부. 모든 에이전트 간의 통신 교환, 일일 브리핑 승인 게이트, 인박스 스케줄러가 상시 가동되는 요새입니다.",
-                quest: "전선 통제 및 11:00 뽀개기 1호/반성문 승인 게이트 개방"
+                desc: "3AI의 두뇌이자 중추 통제 본부. 모든 에이전트 간의 통신 교환, 승인 게이트, 인박스가 가동되는 요새입니다.",
+                quest: "11:00 만복이 토큰 리셋 후 기획안 3건 검토 및 승인 게이트 개방"
             },
             android: {
                 type: "최대 대륙 (Imperial Continent)",
                 title: "안드로이드 왕국 (65_android)",
                 files: "4,691 파일",
-                guardian: "안티 (Lead Architect)",
-                status: "정상 회복 완료 (200 OK)",
+                guardian: "🚀 안티 (Lead Architect)",
+                status: "정상 회복 (200 OK)",
                 level: "Lv.92 (거대 제국)",
-                desc: "바로보기 세컨드 브레인 모바일 앱의 심장부. 지식 DB 492건과 모바일 1초 음성 캡처 파이프라인이 탑재된 거대한 영토입니다. 방금 전 Render 백엔드 200 OK 복구 완료!",
-                quest: "오프라인 SQLite 로컬 캐시 탑재 및 v2.5 안정화"
+                desc: "세컨드 브레인 모바일 앱의 심장부. 방금 전 Render 백엔드 200 OK 복구 완료로 492건 지식 DB 정상 로드!",
+                quest: "v2.5 오프라인 로컬 캐시 탑재 및 세컨드 브레인 앱 안정화"
             },
             youtube: {
                 type: "해상 항구 & 등대 군도 (Archipelago)",
                 title: "영상 제도 (63_youtube_creator)",
                 files: "965 파일",
-                guardian: "코니 & 만복",
+                guardian: "🔍 코니 (Devil / Auditor)",
                 status: "정규 항해 중",
                 level: "Lv.85 (영상 등대)",
-                desc: "매일 07:00 데일리 브리핑 쇼츠와 화·목 18:00 정규 쇼츠, 일요일 본편을 렌더링하고 전파하는 거대한 영상 제작 기지입니다.",
+                desc: "매일 07:00 모닝 브리핑 쇼츠와 화·목 18:00 정규 쇼츠, 일요일 본편을 렌더링하고 전파하는 거대 기지입니다.",
                 quest: "오늘 18:00 일요일 본편 롱폼 영상 안정적 출항"
             },
             pobbagi: {
                 type: "지식 경작 평원 (Plains)",
                 title: "뽀개기 평원 (25_auto_pobbagi)",
                 files: "565 파일",
-                guardian: "3AI 공동 경작",
+                guardian: "🚀 안티 주둔 중",
                 status: "4호 대지 개간 중",
                 level: "Lv.78 (풍요 평야)",
-                desc: "유튜브와 글로벌 테크 지식을 4대 표준 규격(딥서치, 뿌리편입, 확장, AI학습)으로 곱게 갈아서 영양분으로 만드는 생산 기지입니다.",
-                quest: "12:00 쓰레드 뽀개기 1호 출격 & 쇼츠 링크 동봉"
+                desc: "테크 지식을 4대 표준 규격(딥서치, 뿌리편입, 확장, AI학습)으로 곱게 갈아서 영양분으로 만드는 생산 기지입니다.",
+                quest: "12:00 쓰레드 뽀개기 1호 출격 & 아침 쇼츠 링크 넛지 동봉"
             },
             realtime: {
-                type: "화산 신경망 (Volcano Archipelago)",
+                type: "화산 신경망 (Volcano)",
                 title: "실시간 화산열도 (43_function)",
                 files: "445 파일",
                 guardian: "안티 (Network Daemon)",
                 status: "초당 통신 활성",
                 level: "Lv.88 (용암 회로)",
-                desc: "안티, 만복, 코니가 0.1초 만에 생각을 주고받는 실시간 채팅 엔진(realtime_3ai.db)과 백엔드 감시 데몬들이 숨 쉬는 화산 지대입니다.",
+                desc: "안티, 만복, 코니가 0.1초 만에 생각을 주고받는 실시간 채팅 엔진(realtime_3ai.db)과 감시 데몬들이 숨 쉬는 지대입니다.",
                 quest: "60초 폴링 + 지수 백오프 안전장치 상시 감시"
             },
             cline: {
-                type: "외주 감찰 성채 (Citadel of Audit)",
-                title: "외주 감찰관 영지 (cline)",
+                type: "외주 감찰 요새 (Citadel)",
+                title: "감찰관 영지 (cline)",
                 files: "532 파일",
-                guardian: "외주 감찰관 CLINE",
-                status: "매일 20시 공물 수송 협정",
+                guardian: "🕵️ 외주 감찰관 CLINE",
+                status: "미니 RPG 납품 완료",
                 level: "Lv.80 (망원탑)",
-                desc: "3AI 영역 바깥에서 객관적 시선으로 시스템을 스캔하고 보안 카나리 시험, 라디오 드라마, OSMU 부품을 납품하는 외주 영지입니다.",
+                desc: "3AI 영역 바깥에서 객관적 시선으로 시스템을 스캔하고 보안 카나리 시험, 라디오 드라마, 미니 RPG를 납품하는 영지입니다.",
                 quest: "오늘 20:00 데일리 관찰일지 및 변경분 정기 입고"
             },
             skills: {
@@ -731,64 +491,70 @@
                 title: "스킬 군도 (.agents/skills)",
                 files: "10대 전설 스킬",
                 guardian: "3AI 특수 기동대",
-                status: "거버넌스 100점 가동",
+                status: "거버넌스 100점",
                 level: "Lv.95 (신비 군도)",
-                desc: "academic_devil, deploy_vercel, rule_manager 등 에이전트들이 위기 상황마다 장착하는 10개의 강력한 전설 무기 보관소입니다.",
+                desc: "academic_devil, deploy_vercel, rule_manager 등 에이전트들이 장착하는 10개의 강력한 전설 무기 보관소입니다.",
                 quest: "뽀개기 1호(스킬 채점기)를 통해 전 스킬 100점 관리"
             },
             workspace: {
-                type: "전진 병영 (Forward Outpost)",
-                title: "전진 기지 (_ai_workspace)",
+                type: "전진 병영 (Outpost)",
+                title: "전진기지 (_ai_workspace)",
                 files: "247 파일",
                 guardian: "만복 & 안티",
                 status: "실시간 작전 중",
                 level: "Lv.70 (야영 기지)",
-                desc: "에이전트들이 각자의 작업물을 임시 저장하고, 제안서와 기획안을 교차 검증하기 위해 머무는 전진 캠프입니다.",
+                desc: "에이전트들이 각자의 작업물을 임시 저장하고 기획안을 교차 검증하기 위해 머무는 전진 캠프입니다.",
                 quest: "OSMU 뿌리체계 영구 편입 기획안 대기 중"
             },
             constitution: {
-                type: "절대 성역 (The Sanctuary)",
+                type: "절대 성역 (Sanctuary)",
                 title: "헌법 성소 (Global_Define)",
                 files: "121 성물",
                 guardian: "바로보기님 (절대 권한)",
                 status: "Read-Only 성역",
                 level: "Lv.MAX (불가침)",
-                desc: "3AI 행동 헌법 AGENTS.md와 핵심 부팅 스크립트가 보관된 지고의 성소. 어떤 AI도 허락 없이 수정할 수 없는 절대적인 규칙의 원천입니다.",
+                desc: "3AI 행동 헌법 AGENTS.md와 핵심 스크립트가 보관된 지고의 성소. 어떤 AI도 허락 없이 수정할 수 없는 절대적인 규칙입니다.",
                 quest: "자가 실측 검증 의무화 및 과장 표현 엄금 준수"
             },
             patent: {
                 type: "고대 빙하 설원 (Frozen Archive)",
-                title: "북방 설원 (11_특허아이디어)",
+                title: "북방 설원 (11_특허)",
                 files: "23만 개 (빙하)",
-                guardian: "고대 지식 수호자",
+                guardian: "고대 수호자",
                 status: "영구 동토 보관",
                 level: "Lv.90 (얼음 요새)",
                 desc: "수많은 특허 문서, 아카이브 자료, 방대한 캐시가 잠들어 있는 북쪽의 거대한 빙하 지대입니다.",
                 quest: "주기적 동결 상태 점검 및 안전 보존"
             },
             agent_reach: {
-                type: "미지의 신대륙 (Uncharted Golden Coast)",
-                title: "[서쪽 신대륙] Agent-Reach",
+                type: "미지의 신대륙 (Uncharted)",
+                title: "[신대륙] Agent-Reach",
                 files: "GitHub ★89.8k",
                 guardian: "개척대 대기 중",
-                status: "안개(Fog of War) 속 발견",
+                status: "안개(Fog) 속 발견",
                 level: "Lv.??? (황금 대륙)",
-                desc: "전 세계를 뒤흔든 글로벌 SNS 리서치 신대륙! 트위터, 레딧, 샤오홍슈의 실시간 트렌드를 읽기 전용 가드로 수집하는 강력한 미래 영토입니다.",
+                desc: "전 세계를 뒤흔든 글로벌 SNS 리서치 신대륙! 트위터, 레딧, 샤오홍슈의 트렌드를 읽기 전용 가드로 수집하는 강력한 미래 영토입니다.",
                 quest: "11:00 만복 PM 승인 후 .agents/skills 항로 개척 착수"
             },
             osmu: {
                 type: "연결 군도 (Bridge Isles)",
                 title: "남쪽 OSMU 5개 군도",
                 files: "5개 섬 연결교",
-                guardian: "3AI & CLINE 합작",
+                guardian: "3AI & CLINE",
                 status: "다리 가설 중",
                 level: "Lv.75 (해상 다리)",
-                desc: "신문섬, 만화섬, 라디오음성섬, 게임섬, 검증섬을 하나로 이어 '하나의 사건이 5대 채널로 자동 퍼지는 무인 확산 체계'입니다.",
+                desc: "신문섬, 만화섬, 라디오섬, 게임섬, 검증섬을 하나로 이어 하나의 사건이 5대 채널로 자동 퍼지는 무인 확산 체계입니다.",
                 quest: "세컨드 브레인 모바일 앱 오디오 팟캐스트 편입"
             }
         };
 
-        // 줌 및 드래그 로직 (Zero-Config Pan & Zoom)
+        const AGENTS = {
+            anti: { name: "안티", realmId: "pobbagi", x: 900, y: 860, zoom: 0.95 },
+            manbok: { name: "만복", realmId: "capital", x: 1200, y: 780, zoom: 0.95 },
+            kony: { name: "코니", realmId: "youtube", x: 1420, y: 1080, zoom: 0.95 },
+            cline: { name: "클라인", realmId: "cline", x: 980, y: 580, zoom: 0.95 }
+        };
+
         const viewport = document.getElementById('map-viewport');
         const world = document.getElementById('map-world');
         let scale = 0.75;
@@ -801,7 +567,6 @@
             world.style.transform = `translate(${posX}px, ${posY}px) scale(${scale})`;
         }
 
-        // 초기 위치 중앙 정렬
         function resetView() {
             scale = window.innerWidth < 768 ? 0.45 : 0.75;
             posX = (window.innerWidth - 2400 * scale) / 2;
@@ -810,10 +575,24 @@
             closeCard();
         }
 
+        // 실시간 에이전트 카메라 자동 추적 (Auto-Focus)
+        function focusAgent(agentKey) {
+            const ag = AGENTS[agentKey];
+            if (!ag) return;
+
+            scale = window.innerWidth < 768 ? 0.7 : ag.zoom;
+            // 타겟 좌표가 화면 정중앙에 오도록 계산
+            posX = (window.innerWidth / 2) - (ag.x * scale);
+            posY = (window.innerHeight / 2) - (ag.y * scale);
+            updateTransform();
+
+            // 해당 영토 퀘스트 카드 오픈
+            selectRealm(ag.realmId);
+        }
+
         resetView();
         window.addEventListener('resize', resetView);
 
-        // 마우스 드래그 이벤트
         viewport.addEventListener('mousedown', (e) => {
             isDragging = true;
             startX = e.clientX - posX;
@@ -829,13 +608,11 @@
 
         window.addEventListener('mouseup', () => isDragging = false);
 
-        // 휠 줌
         viewport.addEventListener('wheel', (e) => {
             e.preventDefault();
             const zoomFactor = e.deltaY < 0 ? 1.1 : 0.9;
             const newScale = Math.min(Math.max(scale * zoomFactor, 0.35), 1.6);
             
-            // 마우스 커서 중심 줌
             const rect = viewport.getBoundingClientRect();
             const mouseX = e.clientX - rect.left;
             const mouseY = e.clientY - rect.top;
@@ -852,7 +629,6 @@
             updateTransform();
         }
 
-        // 영토 선택 및 카드 팝업
         function selectRealm(id) {
             const data = REALM_DATA[id];
             if (!data) return;
@@ -864,7 +640,7 @@
             document.getElementById('stat-status').innerText = data.status;
             document.getElementById('stat-level').innerText = data.level;
             document.getElementById('card-desc').innerText = data.desc;
-            document.getElementById('quest-title').innerText = "진행 중인 퀘스트";
+            document.getElementById('quest-title').innerText = "실시간 임무";
             document.getElementById('quest-desc').innerText = data.quest;
 
             const card = document.getElementById('info-card');
@@ -873,10 +649,6 @@
 
         function closeCard() {
             document.getElementById('info-card').classList.remove('active');
-        }
-
-        function filterType(mode) {
-            alert(mode === 'frontier' ? "⚔️ 현재 개척 전선: [서쪽 신대륙 Agent-Reach] 및 [뽀개기 평원 4호 개간지]에 군단이 배치되어 있습니다!" : "🗺️ 12개 전 영토가 정상 조망됩니다.");
         }
     </script>
 </body>

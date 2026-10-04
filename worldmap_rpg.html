@@ -835,12 +835,12 @@
             world.style.transform = `translate(${posX}px, ${posY}px) scale(${scale})`;
         }
 
-        function resetView() {
+        function resetView(closeModal = true) {
             scale = window.innerWidth < 768 ? 0.45 : 0.75;
             posX = (window.innerWidth - 2400 * scale) / 2;
             posY = (window.innerHeight - 1600 * scale) / 2;
             updateTransform();
-            closeCard();
+            if (closeModal) closeCard();
         }
 
         function focusAgent(agentKey) {
@@ -855,8 +855,8 @@
             selectRealm(ag.realmId);
         }
 
-        resetView();
-        window.addEventListener('resize', resetView);
+        resetView(true);
+        window.addEventListener('resize', () => resetView(false));
 
         viewport.addEventListener('mousedown', (e) => {
             isDragging = true;

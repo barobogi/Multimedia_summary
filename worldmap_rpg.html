@@ -850,6 +850,11 @@
 
         resetView();
         window.addEventListener('resize', resetView);
+        renderScheduleDashboard('all');
+        const initHash = window.location.hash.replace('#', '');
+        if (initHash && typeof REALM_DATA !== 'undefined' && REALM_DATA[initHash]) {
+            setTimeout(() => selectRealm(initHash), 150);
+        }
 
         viewport.addEventListener('mousedown', (e) => {
             isDragging = true;

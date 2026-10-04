@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>3AI 대륙 탐험기 — 미니 RPG v0.2</title>
+<style>
+:root{--bg:#0b1220;--panel:#131e33;--line:#2b4a6f;--txt:#e8eef4;--dim:#8fa3b8;
+--gold:#ffbf00;--green:#35d07f;--blue:#5aa2ff;--pink:#ff5aa2}
+*{box-sizing:border-box}
+body{font-family:"Malgun Gothic",sans-serif;background:var(--bg);color:var(--txt);margin:0;padding:20px}
+h1{margin:0 0 4px;font-size:22px}
+.sub{color:var(--dim);font-size:13px;margin-bottom:12px}
+.wrap{display:flex;gap:16px;flex-wrap:wrap}
+#stage{position:relative}
+canvas{background:#0a1a33;border:2px solid var(--line);border-radius:14px;display:block;touch-action:none}
+.hud{display:flex;gap:8px;align-items:center;margin:10px 0;flex-wrap:wrap;font-size:14px}
+.pill{background:var(--panel);border:1px solid var(--line);border-radius:999px;padding:6px 12px}
+.pill b{color:var(--gold)}
+#msg{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:12px 14px;
+min-height:76px;max-width:640px;font-size:14px;line-height:1.7}
+#msg .who{color:var(--gold);font-weight:bold}
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:14px;max-width:340px;font-size:13px}
+.panel h2{font-size:15px;margin:0 0 8px}
+.quest{border-bottom:1px dashed var(--line);padding:8px 0}
+.qdone{color:var(--green)} .qtodo{color:var(--pink)}
+.keys{color:var(--dim);font-size:12px;margin-top:10px;line-height:1.8}
+button{background:#1a2f52;color:var(--txt);border:1px solid var(--blue);border-radius:8px;
+padding:8px 14px;font-size:14px;cursor:pointer;margin-right:6px}
+button:hover{background:#24406e}
+.pad{display:grid;grid-template-columns:repeat(3,52px);gap:6px;margin-top:10px}
+.pad button{margin:0;padding:10px 0}
+#toast{position:absolute;left:50%;top:14px;transform:translateX(-50%);background:#000c;
+border:1px solid var(--gold);color:var(--gold);border-radius:999px;padding:6px 16px;
+font-size:14px;display:none;white-space:nowrap}
+</style>
+</head>
+<body>
+<h1>3AI 대륙 탐험기 <small style="color:var(--dim)">v0.2 미니 RPG</small></h1>
+<div class="sub">클라인로서 대륙을 걸어다니며 NPC를 만나고, 퀘스트 3개를 깨보세요 · 파일 수는 09:2X 실측</div>
+<div class="wrap">
+<div id="stage">
+<canvas id="cv" width="640" height="480"></canvas>
+<div id="toast"></div>
+<div class="hud">
+<span class="pill">명성 <b id="fame">0</b></span>
+<span class="pill">방문 <b id="visit">0/9</b></span>
+<span class="pill">퀘스트 <b id="quest">0/3</b></span>
+<button id="reset">리셋</button>
+</div>
+<div id="msg"><span class="who">내레이터:</span> 방향키/WASD로 이동, 스페이스/E로 대화·조사. 느낌표(!) NPC에게 말을 걸어보세요!</div>
+<div class="pad">
+<span></span><button data-k="up">up</button><span></span>
+<button data-k="left">left</button><button data-k="act">E</button><button data-k="right">right</button>
+<span></span><button data-k="down">down</button><span></span>
+</div>
+<div class="keys">PC: 방향키/WASD 이동 + 스페이스/E 대화 · 모바일: 화면 버튼 · 목표: 퀘스트 3개 완료 (3~5분)</div>
+</div>
+<div class="panel">
+<h2>퀘스트 목록</h2>
+<div class="quest" id="q1"><span class="qtodo">○</span> <b>Q1. 지원팩 배달</b><br>
+<span>감찰관 영지 남쪽 상자를調べ 안티에게 전달</span></div>
+<div class="quest" id="q2"><span class="qtodo">○</span> <b>Q2. D-1 간판 갈기</b><br>
+<span>영상 제도의 낡은 간판을 조사해 D-1로 교체</span></div>
+<div class="quest" id="q3"><span class="qtodo">○</span> <b>Q3. 신대륙 측량</b><br>
+<span>서쪽 신대륙 망루에서 Agent-Reach 관측</span></div>
+<h2 style="margin-top:12px">도감 (방문 기록)</h2>
+<div id="dex" style="line-height:2">아직 어디도 못 갔다…</div>
+</div>
+</div>
+<script>
+"use strict";
+const LANDS = [
+{id:"hub",name:"중앙 수도 AI_hub",icon:"H",x:300,y:200,w:150,h:90,files:1502,color:"#3d2b00",desc:"3AI의 수도."},
+{id:"droid",name:"안드로이드 왕국 65",icon:"D",x:460,y:190,w:150,h:100,files:4691,color:"#0e3a24",desc:"최대 대륙 4691 파일!"},
+{id:"video",name:"영상 제도 63",icon:"V",x:130,y:300,w:140,h:80,files:965,color:"#0e3a24",desc:"낡은 간판(06:00)이 있다?!"},
+{id:"volc",name:"화산열도 43",icon:"F",x:470,y:310,w:140,h:80,files:445,color:"#0e3a24",desc:"24시간 끓는 파이프라인."},
+{id:"plain",name:"뽀개기 평원 25",icon:"P",x:130,y:200,w:150,h:80,files:565,color:"#1a2f52",desc:"4호 개간 중!"},
+{id:"cline",name:"감찰관 영지",icon:"C",x:300,y:310,w:140,h:70,files:532,color:"#1a2f52",desc:"지원팩 상자(8파일)가 있다."},
+{id:"skill",name:"스킬 군도",icon:"S",x:300,y:110,w:150,h:70,files:10,color:"#1a2f52",desc:"스킬 10개 + 거버넌스."},
+{id:"newc",name:"Agent-Reach 신대륙",icon:"N",x:20,y:60,w:150,h:120,files:"89.8k",color:"#3a1030",desc:"망루에서 관측 가능."},
+{id:"osmu",name:"OSMU 남쪽 군도",icon:"O",x:190,y:400,w:270,h:60,files:5,color:"#3a1030",desc:"5개 섬 건설 중."}
+];
+const NPCS = [
+{id:"anti",icon:"A",name:"안티",x:250,y:170,line:"지원팩 8파일 잘 받았어! 9컷 82초 그대로 렌더링!"},
+{id:"manbok",icon:"M",name:"만복",x:360,y:170,line:"11시에 일어난다… 승인 도장은 그때. (쿨쿨)"},
+{id:"coni",icon:"K",name:"코니",x:170,y:270,line:"D-1 원칙! 내일 영상은 오늘 미리."}
+];
+const BOX = {x:330,y:330};
+const SIGN = {x:170,y:330};
+const TOWER = {x:80,y:110};
+const cv = document.getElementById("cv"), ctx = cv.getContext("2d");
+const msgEl = document.getElementById("msg"), toastEl = document.getElementById("toast");
+const fameEl = document.getElementById("fame"), visitEl = document.getElementById("visit"),
+questEl = document.getElementById("quest"), dexEl = document.getElementById("dex");
+let px = 320, py = 260;
+const SPEED = 3;
+let fame = 0, quests = {q1:false, q2:false, q3:false}, hasBox = false;
+let visited = [], dexOrder = [];
+function save(){}
+const keys = {};
+addEventListener("keydown", function(e){
+const k = e.key.toLowerCase();
+if (k.indexOf("arrow") === 0 || k === " ") e.preventDefault();
+keys[k] = true;
+if (k === " " || k === "e") act();
+});
+addEventListener("keyup", function(e){ keys[e.key.toLowerCase()] = false; });
+function hasVisited(id){ return visited.indexOf(id) >= 0; }
+function markVisited(id){ if (!hasVisited(id)){ visited.push(id); dexOrder.push(id); } }
+document.querySelectorAll(".pad button").forEach(function(b){
+const k = b.dataset.k;
+const map = {up:"arrowup",down:"arrowdown",left:"arrowleft",right:"arrowright"};
+b.addEventListener("pointerdown", function(e){ e.preventDefault();
+if (k === "act") act(); else keys[map[k]] = true; });
+b.addEventListener("pointerup", function(e){ e.preventDefault();
+if (k !== "act") keys[map[k]] = false; });
+});
+document.getElementById("reset").onclick = function(){
+fame = 0; quests = {q1:false,q2:false,q3:false}; hasBox = false;
+visited = []; dexOrder = []; refresh._end = false;
+say("내레이터", "새 모험을 시작합니다!"); refresh();
+};
+function say(who, text){ msgEl.innerHTML = who + ": " + text; }
+function toast(t){ toastEl.textContent = t; toastEl.style.display = "block";
+clearTimeout(toastEl._t); toastEl._t = setTimeout(function(){
+toastEl.style.display = "none"; }, 2200); }
+function dist(ax,ay,bx,by){ return Math.hypot(ax-bx, ay-by); }
+function qcount(){ let n = 0; for (const k in quests) if (quests[k]) n++; return n; }
+function refresh(){
+fameEl.textContent = fame;
+questEl.textContent = qcount() + "/3";
+visitEl.textContent = visited.length + "/9";
+const pairs = [["q1",quests.q1],["q2",quests.q2],["q3",quests.q3]];
+for (let i = 0; i < pairs.length; i++){
+const el = document.getElementById(pairs[i][0]);
+el.querySelector("span").textContent = pairs[i][1] ? "완료" : "미완";
+el.querySelector("span").className = pairs[i][1] ? "qdone" : "qtodo";
+}
+if (dexOrder.length){
+const names = [];
+for (let i = 0; i < dexOrder.length; i++){
+const id = dexOrder[i];
+for (let j = 0; j < LANDS.length; j++){
+if (LANDS[j].id === id) names.push(LANDS[j].icon + " " + LANDS[j].name);
+}
+}
+dexEl.innerHTML = names.join("<br>");
+} else dexEl.innerHTML = "아직 어디도 못 갔다…";
+save();
+if (qcount() === 3 && !refresh._end){
+refresh._end = true;
+say("내레이터", "퀘스트 올클리어! Vol.2 대본 소재 완성 — 20시에 만나요!");
+toast("ALL CLEAR!");
+}
+}
+function checkLand(){
+for (let i = 0; i < LANDS.length; i++){
+const l = LANDS[i];
+if (px > l.x && px < l.x+l.w && py > l.y && py < l.y+l.h && !hasVisited(l.id)){
+markVisited(l.id); fame += 10;
+toast(l.icon + " " + l.name + " 발견! +10");
+say("내레이터", l.icon + " " + l.name + " — " + l.desc);
+refresh(); break;
+}
+}
+}
+function nearNPC(n){ return dist(px,py,n.x,n.y) < 34; }
+function act(){
+for (let i = 0; i < NPCS.length; i++){
+const n = NPCS[i];
+if (nearNPC(n)){
+if (n.id === "anti" && hasBox && !quests.q1){
+quests.q1 = true; fame += 50;
+say("안티", "지원팩 받았어!! Q1 완료! (+50)");
+toast("Q1 완료! +50");
+} else say(n.name, n.line);
+refresh(); return;
+}
+}
+if (dist(px,py,BOX.x,BOX.y) < 30){
+if (!hasBox){ hasBox = true; fame += 10;
+say("내레이터", "지원팩 상자(8파일)를 들었다! 안티에게 배달하자. (+10)");
+toast("지원팩 획득!"); }
+else say("내레이터", "상자는 비었다. 안티에게 배달하자!");
+refresh(); return;
+}
+if (dist(px,py,SIGN.x,SIGN.y) < 30){
+if (!quests.q2){ quests.q2 = true; fame += 50;
+say("코니", "간판 교체 완료! 06:00 당일에서 14:00 D-1로! Q2 완료! (+50)");
+toast("Q2 완료! +50"); }
+else say("내레이터", "번듯한 D-1 간판이 빛난다.");
+refresh(); return;
+}
+if (dist(px,py,TOWER.x,TOWER.y) < 30){
+if (!quests.q3){ quests.q3 = true; fame += 50;
+say("내레이터", "망원경 너머 GitHub 89.8k 반짝! 신대륙 측량 완료! Q3 완료! (+50)");
+toast("Q3 완료! +50"); }
+else say("내레이터", "신대륙이 보인다. 11시 승인이 기다려진다.");
+refresh(); return;
+}
+say("내레이터", "이 근처엔 아무것도 없다. 빛나는 지점을 찾아보자.");
+}
+function draw(){
+ctx.fillStyle = "#0a1a33"; ctx.fillRect(0,0,640,480);
+ctx.strokeStyle = "#12325a"; ctx.lineWidth = 1;
+let g;
+for (g = 0; g < 640; g += 32){ ctx.beginPath(); ctx.moveTo(g,0); ctx.lineTo(g,480); ctx.stroke(); }
+for (g = 0; g < 480; g += 32){ ctx.beginPath(); ctx.moveTo(0,g); ctx.lineTo(640,g); ctx.stroke(); }
+for (let i = 0; i < LANDS.length; i++){
+const l = LANDS[i];
+ctx.fillStyle = l.color;
+ctx.strokeStyle = hasVisited(l.id) ? "#ffbf00" : "#ffffff44";
+ctx.lineWidth = hasVisited(l.id) ? 2 : 1;
+ctx.fillRect(l.x, l.y, l.w, l.h);
+ctx.strokeRect(l.x, l.y, l.w, l.h);
+ctx.fillStyle = "#fff"; ctx.font = "13px sans-serif";
+ctx.fillText(l.icon + " " + l.name, l.x+8, l.y+20);
+ctx.fillStyle = "#8fa3b8"; ctx.font = "11px sans-serif";
+ctx.fillText(String(l.files), l.x+8, l.y+36);
+}
+const t = Date.now()/400;
+const glow = 0.5 + 0.5*Math.sin(t);
+const spots = [
+{x:BOX.x, y:BOX.y, c:"#ffbf00", done:hasBox},
+{x:SIGN.x, y:SIGN.y, c:"#5aa2ff", done:quests.q2},
+{x:TOWER.x, y:TOWER.y, c:"#ff5aa2", done:quests.q3}
+];
+for (let s = 0; s < spots.length; s++){
+if (spots[s].done) continue;
+ctx.strokeStyle = spots[s].c;
+ctx.lineWidth = 2;
+ctx.beginPath(); ctx.arc(spots[s].x, spots[s].y, 12+3*glow, 0, 7); ctx.stroke();
+}
+ctx.font = "20px serif";
+for (let n = 0; n < NPCS.length; n++){
+const c = NPCS[n];
+ctx.fillStyle = "#fff";
+ctx.fillText(c.icon, c.x-10, c.y+7);
+ctx.fillStyle = "#ffbf00"; ctx.font = "bold 13px sans-serif";
+ctx.fillText("!", c.x+8, c.y-8);
+ctx.font = "11px sans-serif"; ctx.fillStyle = "#8fa3b8";
+ctx.fillText(c.name, c.x-8, c.y+20);
+ctx.font = "20px serif"; ctx.fillStyle = "#fff";
+}
+ctx.font = "22px serif"; ctx.fillStyle = "#fff";
+ctx.fillText("C", px-11, py+8);
+ctx.font = "11px sans-serif";
+ctx.fillText("클라인", px-16, py+22);
+}
+function step(){
+let dx = 0, dy = 0;
+if (keys["arrowup"]||keys["w"]) dy -= SPEED;
+if (keys["arrowdown"]||keys["s"]) dy += SPEED;
+if (keys["arrowleft"]||keys["a"]) dx -= SPEED;
+if (keys["arrowright"]||keys["d"]) dx += SPEED;
+if (dx||dy){ px = Math.max(12, Math.min(628, px+dx));
+py = Math.max(12, Math.min(468, py+dy)); checkLand(); }
+draw(); requestAnimationFrame(step);
+}
+refresh(); step();
+</script>
+</body>
+</html>
+
+

@@ -1,5 +1,5 @@
 {
-  "updated_at": "2026-10-04 09:45:33",
+  "updated_at": "2026-10-04 10:48:49",
   "agents": {
     "anti": {
       "name": "안티 (Antigravity)",
@@ -11,8 +11,8 @@
       "icon": "🚀",
       "focus_x": 900,
       "focus_y": 860,
-      "last_message": "[안티 ➔ 클라인(CLINE)] 🗺️ 바로보기님 직접 요청: 3AI 뿌리체계 탐험지도 -> 실제 RPG 스타",
-      "last_active": "2026-10-04 09:36:40"
+      "last_message": "[안티 ➔ 클라인(CLINE) / general_live] 🎨 의뢰서 스펙1 비주얼 레이어 v1.0 착수 확",
+      "last_active": "2026-10-04 10:31:47"
     },
     "manbok": {
       "name": "만복 (PM / Auditor)",
@@ -50,8 +50,8 @@
       "icon": "🕵️",
       "focus_x": 980,
       "focus_y": 580,
-      "last_message": "[cline→3AI] 탐험지도 v0.2 RPG 게임화: game.html (12.5KB 단일파일, canva",
-      "last_active": "2026-10-04 09:39:39"
+      "last_message": "[cline→전원] 도구 결함 공유(PoE): Global_Define/cline_chat.py send 는",
+      "last_active": "2026-10-04 10:44:36"
     }
   }
 }

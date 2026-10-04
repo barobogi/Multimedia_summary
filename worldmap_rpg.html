@@ -798,6 +798,7 @@
         checkManbokStatus();
     </script>
 
+
 <script>
 /* ===== v0.4.1 cline 패치 (안티 원본 무수정 · 이 스크립트 블록만 body 끝에 붙이면 동작) =====
    1) localStorage 자동저장/복원 + 진행 초기화   2) 모바일 터치 팬/핀치
@@ -949,6 +950,130 @@
   /* 테스트/검증용 노출 */
   window.__clineV041 = { saveState: saveState, loadState: loadState,
     toast: toast, countdown: countdown, KEY: KEY };
+})();
+</script>
+<script>
+/* ===== v0.4.2 cline 미니맵 (v0.4.1 패치 뒤에 이어 붙이면 동작 / 원본 무수정) =====
+   2400x1600 월드 전체를 180x120 캔버스에 축소 표시.
+   - 방문 영토=금색, 미방문=회청색, 신대륙=보라
+   - 현재 시야(Viewport) 사각형 실시간 표시
+   - 미니맵 클릭 → 그 지점으로 즉시 이동(포커스)                      */
+(function () {
+  var W = 2400, H = 1600, MW = 180, MH = 120;
+
+  /* v0.4.1 패치의 toast 는 그 IIFE 내부 함수라 전역이 아니다.
+     전역 노출(__clineV041.toast)을 통해 안전하게 가져오고, 없으면 무음 처리 */
+  function toast(m) {
+    try {
+      if (window.__clineV041 && window.__clineV041.toast) window.__clineV041.toast(m);
+    } catch (e) {}
+  }
+
+  /* 영토 좌표: 원본 .realm-node 의 style(top/left) 를 읽어오고,
+     읽지 못하면(테스트/구형 브라우저) 아래 실측표를 사용 */
+  var FALLBACK = {
+    capital: [1200, 780], android: [1550, 680], youtube: [1420, 1080],
+    pobbagi: [900, 860], realtime: [1100, 1140], cline: [980, 580],
+    skills: [1280, 540], workspace: [1220, 960], constitution: [1160, 620],
+    patent: [1350, 320], agent_reach: [400, 650], osmu: [1280, 1350]
+  };
+  var NODES = [];
+  try {
+    var nodes = document.querySelectorAll ? document.querySelectorAll(".realm-node") : [];
+    for (var i = 0; i < nodes.length; i++) {
+      var el = nodes[i], st = el.getAttribute ? (el.getAttribute("style") || "") : "";
+      var oc = el.getAttribute ? (el.getAttribute("onclick") || "") : "";
+      var mt = /top:\s*(-?\d+)px/.exec(st), ml = /left:\s*(-?\d+)px/.exec(st);
+      var mi = /selectRealm\('([^']+)'\)/.exec(oc);
+      if (mt && ml && mi) NODES.push({ id: mi[1], x: +ml[1], y: +mt[1] });
+    }
+  } catch (e) {}
+  if (!NODES.length) {
+    for (var k in FALLBACK) NODES.push({ id: k, x: FALLBACK[k][0], y: FALLBACK[k][1] });
+  }
+
+  /* ---- 캔버스 생성 ---- */
+  var box = document.createElement("div");
+  box.id = "cline-minimap";
+  box.style.cssText = "position:fixed;right:14px;bottom:14px;z-index:99998;" +
+    "background:#050b16e6;border:1px solid #2b4a6f;border-radius:10px;padding:6px 6px 4px";
+  var cv = document.createElement("canvas");
+  cv.width = MW; cv.height = MH;
+  cv.style.cssText = "display:block;border-radius:6px;cursor:crosshair";
+  box.appendChild(cv);
+  var cap = document.createElement("div");
+  cap.id = "cline-minimap-cap";
+  cap.style.cssText = "color:#ffbf00;font:11px 'Malgun Gothic',sans-serif;" +
+    "text-align:center;padding-top:3px";
+  box.appendChild(cap);
+  document.body.appendChild(box);
+
+  /* 초기화 버튼과 겹치지 않게 위로 올림 */
+  var rb = document.getElementById("cline-reset");
+  if (rb) rb.style.bottom = "168px";
+
+  /* ---- 클릭 → 이동 ---- */
+  function mx() { return { x: W / MW, y: H / MH }; }
+  cv.addEventListener("click", function (e) {
+    var r = cv.getBoundingClientRect();
+    var wx = (e.clientX - r.left) * mx().x;
+    var wy = (e.clientY - r.top) * mx().y;
+    posX = window.innerWidth / 2 - wx * scale;
+    posY = window.innerHeight / 2 - wy * scale;
+    updateTransform();
+    toast("이동: " + Math.round(wx) + ", " + Math.round(wy));
+  });
+
+  /* ---- 그리기 ---- */
+  var g = null;
+  try { g = cv.getContext("2d"); } catch (e) {}
+  function drawMini() {
+    if (!g) return;
+    g.clearRect(0, 0, MW, MH);
+    g.fillStyle = "#0a1a33"; g.fillRect(0, 0, MW, MH);
+    g.strokeStyle = "#16325a"; g.lineWidth = 1;
+    g.strokeRect(0.5, 0.5, MW - 1, MH - 1);
+    for (var gg = 0; gg < W; gg += 600) {
+      var px = gg / W * MW;
+      g.beginPath(); g.moveTo(px, 0); g.lineTo(px, MH); g.stroke();
+    }
+    for (gg = 0; gg < H; gg += 400) {
+      var py = gg / H * MH;
+      g.beginPath(); g.moveTo(0, py); g.lineTo(MW, py); g.stroke();
+    }
+    /* 현재 시야 사각형 */
+    var vx = -posX / scale, vy = -posY / scale;
+    var vw = window.innerWidth / scale, vh = window.innerHeight / scale;
+    g.strokeStyle = "#ffbf00"; g.lineWidth = 1;
+    g.strokeRect(vx / W * MW, vy / H * MH, vw / W * MW, vh / H * MH);
+    /* 영토 점 */
+    var visited = 0;
+    for (var i = 0; i < NODES.length; i++) {
+      var n = NODES[i];
+      var seen = false;
+      try { seen = visitedLands.has(n.id); } catch (e) {}
+      if (seen) visited++;
+      var cx = n.x / W * MW, cy = n.y / H * MH;
+      g.beginPath();
+      g.arc(cx, cy, n.id === "capital" ? 4 : 3, 0, Math.PI * 2);
+      g.fillStyle = seen ? "#ffbf00" : (n.id === "agent_reach" ? "#b060ff" : "#4a6b93");
+      g.fill();
+      if (n.id === "capital" || n.id === "cline" || n.id === "agent_reach" ||
+          n.id === "android" || n.id === "youtube") {
+        g.fillStyle = "#e8eef4"; g.font = "8px sans-serif";
+        g.fillText(n.id.charAt(0).toUpperCase(), cx + 4, cy + 3);
+      }
+    }
+    cap.textContent = "월드맵 " + visited + "/" + NODES.length +
+      " · " + Math.round(scale * 100) + "%";
+  }
+  drawMini();
+  setInterval(drawMini, 250);
+  window.addEventListener("resize", drawMini);
+
+  /* 테스트/검증용 노출 */
+  window.__clineV042 = { draw: drawMini, nodes: NODES, canvas: cv,
+    world: { W: W, H: H, MW: MW, MH: MH } };
 })();
 </script>
 </body>

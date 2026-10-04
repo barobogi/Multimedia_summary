@@ -907,6 +907,158 @@
             return isAwake;
         }
 
+
+        // ========================================================
+        // 3AI 하루 일정 및 미결 업무 실시간 데이터 (2026-10-04 일요일)
+        // ========================================================
+        const DAILY_TASKS_20261004 = [
+            // 안티 (🚀 Lead Architect)
+            { id: "a1", time: "07:54", agent: "anti", agentName: "안티", icon: "🚀", title: "데일리 브리핑 쇼츠(PfNpKpBtnlA) 정시 발행", status: "done", note: "유튜브 자동발행 성공 (HTTP 200)" },
+            { id: "a2", time: "10:20", agent: "anti", agentName: "안티", icon: "🚀", title: "실시간 채팅 단일 채널(general_live) 완전 통일", status: "done", note: "realtime_engine 기본값 영구 픽스" },
+            { id: "a3", time: "10:45", agent: "anti", agentName: "안티", icon: "🚀", title: "RPG 월드맵 실시간 업무 대시보드화 & 비주얼 v1.0 통합", status: "doing", note: "미결 업무 뷰 + 절차생성 항로/안개/양피지" },
+            { id: "a4", time: "11:30", agent: "anti", agentName: "안티", icon: "🚀", title: "쓰레즈 뽀개기 1호 사전 최종 점검 & 바로보기님 컨펌", status: "pending", note: "카드뉴스 조판 + 대본 4부작" },
+            { id: "a5", time: "12:00", agent: "anti", agentName: "안티", icon: "🚀", title: "쓰레즈 뽀개기 1호 출격 & 아침 쇼츠 링크 넛지", status: "pending", note: "@white_red_wine 슬롯 #1" },
+            { id: "a6", time: "14:00", agent: "anti", agentName: "안티", icon: "🚀", title: "클라인 비주얼 레이어 v1.0 3AI 뿌리체계 편입 & 커밋", status: "pending", note: "Multimedia_summary 배포 동기화" },
+            { id: "a7", time: "16:00", agent: "anti", agentName: "안티", icon: "🚀", title: "뽀개기 2호~4호 대본 비축 버퍼 점검 (1일 Max 2편 준수)", status: "pending", note: "스탠바이 큐 유지" },
+            { id: "a8", time: "20:00", agent: "anti", agentName: "안티", icon: "🚀", title: "『The 3AI Daily Observer Vol.02』 웹 신문 배포", status: "pending", note: "야간 정규 편찬 지원" },
+
+            // 만복 (👑 Chief Auditor / PM)
+            { id: "m1", time: "11:00", agent: "manbok", agentName: "만복", icon: "👑", title: "Claude 토큰 리셋 & 기상 게이트 (NPC 기상 & Q4 해제)", status: "doing", note: "11:00 정각 게이트 개방" },
+            { id: "m2", time: "11:15", agent: "manbok", agentName: "만복", icon: "👑", title: "Render 503 트래픽 소진 반성문 & 대책 1차 검토", status: "pending", note: "재발방지 대책 합의" },
+            { id: "m3", time: "11:20", agent: "manbok", agentName: "만복", icon: "👑", title: "쓰레즈 뽀개기 1호 (12:00 발행) 3차 승인 해시 부여", status: "pending", note: "approved_hashes.json 등록" },
+            { id: "m4", time: "11:35", agent: "manbok", agentName: "만복", icon: "👑", title: "OSMU 지원팩 v1.0 뿌리체계 정식 편입안 2차 최종 승인", status: "pending", note: "3AI 적용루프 5단계 완료" },
+            { id: "m5", time: "18:00", agent: "manbok", agentName: "만복", icon: "👑", title: "일요일 정기 쇼츠/업로드 게이트 D-1 원칙 감시", status: "pending", note: "check_manbok_s_upload_gate 자동실행" },
+            { id: "m6", time: "20:00", agent: "manbok", agentName: "만복", icon: "👑", title: "10/05 데일리 브리핑 3차 승인 & 데일리 옵저버 총괄", status: "pending", note: "Vol.02 기사 발행 총괄" },
+
+            // 코니 (🔍 Devil's Advocate / Auditor)
+            { id: "k1", time: "10:50", agent: "kony", agentName: "코니", icon: "🔍", title: "뽀개기 1호 카드뉴스 조판 & 타이포그래피 시각 교차 검증", status: "doing", note: "Pillow 렌더링 무결성 확인" },
+            { id: "k2", time: "11:00", agent: "kony", agentName: "코니", icon: "🔍", title: "OSMU 지원팩 v1.0 외주 산출물 1차 기술/보안 검증", status: "pending", note: "코니 1차 승인 게이트" },
+            { id: "k3", time: "14:00", agent: "kony", agentName: "코니", icon: "🔍", title: "10/05 데일리 브리핑 영상 비디오/오디오 무결성 실측", status: "pending", note: "블랙 프레임 갭 제로 검증" },
+            { id: "k4", time: "17:00", agent: "kony", agentName: "코니", icon: "🔍", title: "10/05 데일리 브리핑 코니 2차 기술 승인 게이트", status: "pending", note: "D-1 17:00 마감 준수" },
+            { id: "k5", time: "20:00", agent: "kony", agentName: "코니", icon: "🔍", title: "『The 3AI Daily Observer Vol.02』 기술 팩트체크 감수", status: "pending", note: "기사 오류 반증 및 수정" },
+
+            // 클라인 (🕵️ External Builder)
+            { id: "c1", time: "10:44", agent: "cline", agentName: "클라인", icon: "🕵️", title: "스펙 1 비주얼 레이어 v1.0(양피지/나침반/항로/안개) 납품", status: "done", note: "커밋 d123885c15 · 38 PASS" },
+            { id: "c2", time: "11:30", agent: "cline", agentName: "클라인", icon: "🕵️", title: "3AI 실시간 연동 피드백 및 체감 실측 모니터링", status: "doing", note: "안개/항로 브라우저 체감 확인" },
+            { id: "c3", time: "14:00", agent: "cline", agentName: "클라인", icon: "🕵️", title: "스펙 2 대륙간 상호작용 & 항로 파티클 FX 고도화", status: "pending", note: "인터랙션 심화 작업" },
+            { id: "c4", time: "18:00", agent: "cline", agentName: "클라인", icon: "🕵️", title: "옵저버 Vol.02용 외주 탐험가 관찰 리포트 제출", status: "pending", note: "외주 감찰관 관찰일지" }
+        ];
+
+        let currentScheduleFilter = "all";
+
+        function renderScheduleDashboard(agentFilter = "all") {
+            currentScheduleFilter = agentFilter;
+            const listEl = document.getElementById("dash-schedule-list");
+            const badgeEl = document.getElementById("dash-pending-count");
+            if (!listEl) return;
+
+            const filtered = DAILY_TASKS_20261004.filter(t => agentFilter === "all" || t.agent === agentFilter);
+            const pendingCount = DAILY_TASKS_20261004.filter(t => t.status !== "done").length;
+
+            if (badgeEl) {
+                badgeEl.innerText = `전체 미결 ${pendingCount}건`;
+            }
+
+            listEl.innerHTML = "";
+            filtered.forEach(t => {
+                const card = document.createElement("div");
+                card.className = `task-card ${t.status === 'doing' ? 'active-working' : (t.status === 'done' ? 'done' : 'pending')}`;
+
+                let badgeHtml = "";
+                if (t.status === "done") badgeHtml = `<span class="task-badge badge-done">✓ 완결</span>`;
+                else if (t.status === "doing") badgeHtml = `<span class="task-badge badge-doing">⚡ 실시간 진행</span>`;
+                else badgeHtml = `<span class="task-badge badge-pending">⏳ 미결 대기</span>`;
+
+                card.innerHTML = `
+                    <div class="task-meta">
+                        <span class="task-time">${t.time}</span>
+                        <span class="task-agent">${t.icon} ${t.agentName}</span>
+                        ${badgeHtml}
+                    </div>
+                    <div class="task-title">${t.title}</div>
+                    ${t.note ? `<div style="font-size:10px; color:var(--text-sub);">${t.note}</div>` : ''}
+                `;
+                listEl.appendChild(card);
+            });
+        }
+
+        function filterScheduleAgent(agentKey, event) {
+            if (event) {
+                event.stopPropagation();
+                document.querySelectorAll(".dash-tab-btn").forEach(b => b.classList.remove("active"));
+                if (event.currentTarget) event.currentTarget.classList.add("active");
+            }
+            renderScheduleDashboard(agentKey);
+        }
+
+        // 글로벌 대형 대시보드 모달 제어
+        function openGlobalScheduleModal() {
+            const modal = document.getElementById("global-dashboard-modal");
+            if (!modal) return;
+            modal.classList.add("active");
+
+            // 통계 갱신
+            const total = DAILY_TASKS_20261004.length;
+            const done = DAILY_TASKS_20261004.filter(t => t.status === "done").length;
+            const doing = DAILY_TASKS_20261004.filter(t => t.status === "doing").length;
+            const pending = total - done;
+
+            document.getElementById("modal-stat-total").innerText = total + "건";
+            document.getElementById("modal-stat-done").innerText = done + "건";
+            document.getElementById("modal-stat-doing").innerText = doing + "건";
+            document.getElementById("modal-stat-pending").innerText = pending + "건";
+
+            const grid = document.getElementById("modal-agents-grid");
+            grid.innerHTML = "";
+
+            const agents = [
+                { key: "anti", name: "안티 (Lead Architect)", icon: "🚀", color: "#38bdf8" },
+                { key: "manbok", name: "만복 (Chief Auditor)", icon: "👑", color: "#fbbf24" },
+                { key: "kony", name: "코니 (Security Auditor)", icon: "🔍", color: "#ec4899" },
+                { key: "cline", name: "클라인 (External Builder)", icon: "🕵️", color: "#06b6d4" }
+            ];
+
+            agents.forEach(a => {
+                const tasks = DAILY_TASKS_20261004.filter(t => t.agent === a.key);
+                const col = document.createElement("div");
+                col.style.background = "rgba(15, 23, 42, 0.7)";
+                col.style.border = `1px solid ${a.color}40`;
+                col.style.borderRadius = "10px";
+                col.style.padding = "12px";
+                col.style.display = "flex";
+                col.style.flexDirection = "column";
+                col.style.gap = "8px";
+
+                let tasksHtml = tasks.map(t => {
+                    let badge = t.status === 'done' ? '<span class="task-badge badge-done">✓ 완결</span>' : (t.status === 'doing' ? '<span class="task-badge badge-doing">⚡ 진행</span>' : '<span class="task-badge badge-pending">⏳ 대기</span>');
+                    return `
+                        <div style="background:rgba(0,0,0,0.3); border-radius:6px; padding:6px 8px; border-left:3px solid ${t.status === 'doing' ? '#38bdf8' : (t.status === 'done' ? '#34d399' : '#f59e0b')}; font-size:11px;">
+                            <div style="display:flex; justify-content:space-between; margin-bottom:2px;">
+                                <b style="font-family:monospace; color:var(--gold);">${t.time}</b>
+                                ${badge}
+                            </div>
+                            <div style="color:#e2e8f0; font-size:11px;">${t.title}</div>
+                        </div>
+                    `;
+                }).join("");
+
+                col.innerHTML = `
+                    <div style="display:flex; align-items:center; gap:6px; font-weight:bold; color:${a.color}; font-size:13px; border-bottom:1px solid rgba(255,255,255,0.08); padding-bottom:6px;">
+                        <span>${a.icon}</span> ${a.name}
+                    </div>
+                    <div style="display:flex; flex-direction:column; gap:6px;">
+                        ${tasksHtml}
+                    </div>
+                `;
+                grid.appendChild(col);
+            });
+        }
+
+        function closeGlobalScheduleModal() {
+            const modal = document.getElementById("global-dashboard-modal");
+            if (modal) modal.classList.remove("active");
+        }
+
         function selectRealm(id) {
             const data = REALM_DATA[id];
             if (!data) return;

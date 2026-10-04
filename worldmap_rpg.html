@@ -850,11 +850,6 @@
 
         resetView();
         window.addEventListener('resize', resetView);
-        renderScheduleDashboard('all');
-        const initHash = window.location.hash.replace('#', '') || 'pobbagi';
-        if (initHash && typeof REALM_DATA !== 'undefined' && REALM_DATA[initHash]) {
-            selectRealm(initHash);
-        }
 
         viewport.addEventListener('mousedown', (e) => {
             isDragging = true;
@@ -1179,6 +1174,12 @@
         // 1초마다 만복 시간 체크 실행
         setInterval(checkManbokStatus, 5000);
         checkManbokStatus();
+
+        renderScheduleDashboard('all');
+        const initHash = window.location.hash.replace('#', '') || 'pobbagi';
+        if (initHash && typeof REALM_DATA !== 'undefined' && REALM_DATA[initHash]) {
+            selectRealm(initHash);
+        }
     </script>
 
 

@@ -1373,14 +1373,14 @@
       },
       {
         "speaker": "만복",
-        "text": "파일이 있다는 사실과 승인이 끝났다는 사실은 다릅니다. 이제 감시기는 파일 내부의 승인 상태와 해시까지 직접 대조합니다."
+        "text": "파일이 있다는 사실과 승인이 끝났다는 사실은 다릅니다. 현재 Threads 감시는 파일 존재와 수정 시각만 확인하며, 내부 승인 상태 대조는 다음 과제로 남아 있습니다."
       },
       {
         "speaker": "안티",
         "text": "빈틈없는 교차 검증과 함께 알차고 기분 좋은 금요일 되세요!"
       }
     ],
-    "detail_content": "# [3AI 딥다이브 리포트] 파일 존재만 보던 감시기의 함정과 상태 실측 검증\n\n## 1. 사건 근거 (2026-10-09)\n- **사례 1 (`deadline_watch.py`)**: Threads 큐 JSON 파일의 `os.path.exists()`만 검사해 내부 `status`가 `REJECTED`인 반려 원고도 완료로 판정.\n- **사례 2 (`audit_silence_v2.py`)**: 상세 집계에서 `DOWN` 상태 데몬이 2건 검출됐으나 요약 문자열이 고정 문구(`전부 SERVING`)를 출력.\n\n## 2. 재발 방지 조치\n1. 큐 JSON 파싱 후 `status == \"APPROVED\"` 및 실체 이미지 파일 존재까지 확인해야 완료 인정.\n2. 요약 보고서 문구를 실측 카운트 변수(`down_count == 0`)와 직접 연동."
+    "detail_content": "# [3AI 딥다이브 리포트] 파일 존재만 보던 감시기의 함정과 상태 실측 검증\n\n## 1. 사건 근거 (2026-10-09)\n- **사례 1 (`deadline_watch.py`)**: Threads 큐 JSON 파일의 `os.path.exists()`만 검사해 내부 `status`가 `REJECTED`인 반려 원고도 완료로 판정.\n- **사례 2 (`audit_silence_v2.py`)**: 상세 집계에서 `DOWN` 상태 데몬이 2건 검출됐으나 요약 문자열이 고정 문구(`전부 SERVING`)를 출력.\n\n## 2. 재발 방지 조치\n1. 큐 JSON 파싱 후 `status == \"APPROVED\"` 및 실체 이미지 파일 존재까지 확인해야 완료 인정 — 이 항목은 아직 구현되지 않았으며(`deadline_watch.py`의 Threads 판정은 `chk_file` 글롭 존재 확인만 수행) 다음 과제로 기록함.\n2. 요약 보고서 문구를 실측 카운트 변수(`down_count == 0`)와 직접 연동."
   },
   {
     "episode_id": "DAILY_20261017",
